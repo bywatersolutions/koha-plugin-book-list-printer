@@ -1,3 +1,4 @@
+[% USE AuthorisedValues %]
 [% USE Koha %]
 [% INCLUDE 'doc-head-open.inc' %]
  <title>Koha: Book List Printer</title>
@@ -11,7 +12,17 @@
                 [% Koha.Preference('LibraryName') | html %]
             </p>
             <p class="text-center">
-                Library [% ccode %] by [% orderby %]
+                Library
+                [% FOREACH l IN locations %]
+                    [% AuthorisedValues.GetByCode( 'LOC', l ) %]
+                    [%- UNLESS loop.last %],[% END %]
+                [% END %]
+                by
+                [% SWITCH displayby %]
+                    [% CASE 'title' %] Title
+                    [% CASE 'author' %] Author
+                    [% CASE 'subject' %] Subject
+                [% END %]
             </p>
         </div>
     </div>

@@ -67,18 +67,27 @@ sub report_step2 {
     my $filename = 'report-step2-html.tt';
     my $template = $self->get_template({file => $filename});
 
+    my $display_by = $cgi->param('display_by');
+
     my $order_by
-        = $cgi->param('displayby') eq 'title'   ? 'biblio.title'
-        : $cgi->param('displayby') eq 'author'  ? 'biblio.author'
-        : $cgi->param('displayby') eq 'subject' ? 'subject'
+        = $display_by eq 'title'   ? 'biblio.title'
+        : $display_by eq 'author'  ? 'biblio.author'
+        : $display_by eq 'subject' ? 'subject'
         :                                         'title';
 
-    my $items = Koha::Items->search({}, {prefetch => 'biblio', order_by => {-asc => $order_by}});
+    my @locations = $cgi->multi_param('location');
 
-    $template->param(items => $items);
+    my $search_params = {};
+    $search_params->{permanent_location} = \@locations if @locations;
+
+    my $items = Koha::Items->search($search_params, {prefetch => 'biblio', order_by => {-asc => $order_by}});
+
+    $template->param(items => $items, locations => \@locations, displayby => $display_by);
 
     $self->output_html($template->output());
 }
 
+#my $schema = Koha::Database->new->schema;
+#$schema->storage->debug(1);
 
 1;

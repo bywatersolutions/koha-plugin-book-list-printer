@@ -1,3 +1,4 @@
+[% USE AuthorisedValues %]
 [% INCLUDE 'doc-head-open.inc' %]
  <title>Koha: Book List Printer</title>
 [% INCLUDE 'doc-head-close.inc' %]
@@ -24,11 +25,22 @@
               <input type="hidden" name="method" value="[% METHOD %]"/>
               <input type="hidden" name="output" value="1" />
 
-              <!-- TODO Add location selector -->
+              <div class="form-group">
+                <label for="location">Locations</label>
+
+                <div class="checkbox">
+                  [% FOREACH av IN AuthorisedValues.GetAuthValueDropbox('LOC') %]
+                      <label>
+                        <input type="checkbox" name="location" value="[% av.authorised_value | html %]">
+                        [% av.lib | html %]
+                      </label>
+                  [% END %]
+                </div>
+              </div>
 
               <div class="form-group">
                 <label for="display_by">Display by</label>
-                <select class="form-control" id="display_by">
+                <select class="form-control" id="display_by" name="display_by">
                   <option value="title">Title</option>
                   <option value="author">Author</option>
                   <option value="subject">Subject</option>
