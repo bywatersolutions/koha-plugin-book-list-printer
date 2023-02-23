@@ -6,83 +6,39 @@
 [% INCLUDE 'header.inc' %]
 [% INCLUDE 'cat-search.inc' %]
 
-<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; Kitchen Sink &rsaquo; Report &rsaquo; Patron List</div>
+[% WRAPPER 'sub-header.inc' %]
+<div id="breadcrumbs">
+  <a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo;
+  <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo;
+  Book List Printer &rsaquo; 
+  Report &rsaquo; 
+  Set Parameters
+</div>
+[% END %]
 
-<div id="doc3">
-	<h3>Generate List of Patrons</h3>
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+	        <form method="get">
+              <input type="hidden" name="class" value="[% CLASS %]"/>
+              <input type="hidden" name="method" value="[% METHOD %]"/>
+              <input type="hidden" name="output" value="1" />
 
-        <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
-	<form method="get">
-                <input type="hidden" name="class" value="[% CLASS %]"/>
-                <input type="hidden" name="method" value="[% METHOD %]"/>
+              <!-- TODO Add location selector -->
 
-		<label for="branch">Select Library:</label>
-		<select name="branch">
-			[% FOREACH library IN libraries %]
-				<option	value="[% library.branchcode %]">
-					[% library.branchname %]
-				</option>
-			[% END %]
-		</select>
+              <div class="form-group">
+                <label for="display_by">Display by</label>
+                <select class="form-control" id="display_by">
+                  <option value="title">Title</option>
+                  <option value="author">Author</option>
+                  <option value="subject">Subject</option>
+                </select>
+              </div>
 
-		<br/><br/>
-
-		<label for="categorycode">Select Patron Category:</label>
-		<select name="categorycode">
-			<option value="%">Any</option>
-			[% FOREACH category IN categories %]
-				<option value="[% category.categorycode %]">[% category.description %]</option>
-			[% END %]
-		</select>
-
-		<br/><br/>
-
-		<p>Expiration Date Range (Optional): <i>(Date Format: MM/DD/YYYY)</i></p>
-
-		<label>Date From:</label>
-		<table class="split-date-wrap" border="0" cellpadding="0" cellspacing="0">
-
-			<tr>
-				<td><input size="2" id="date-from-mm" name="fromMonth" value="" maxlength="2" type="text" />/</td>
-				<td><input size="2" id="date-from-dd" name="fromDay" value="" maxlength="2" type="text" />/</td>
-				<td><input size="4" class="split-date fill-grid statusformat-l-cc-sp-d-sp-F-sp-Y show-weeks" id="date-from" name="fromYear" value="" maxlength="4" type="text" /></td>
-				<td>
-					<a tabindex="0" aria-haspopup="true" role="button" id="fd-but-date-from" title="Show Calendar" class="date-picker-control" href="#date-from">
-						<span>&nbsp;</span>
-					</a>
-
-				</td>
-			</tr>
-		</table>  
-		<br/>
-
-		<label>Date To:</label>
-		<table class="split-date-wrap" border="0" cellpadding="0" cellspacing="0">
-			<tr>
-				<td><input size="2" id="date-to-mm" name="toMonth" value="" maxlength="2" type="text" />/</td>
-					<td><input size="2" id="date-to-dd" name="toDay" value="" maxlength="2" type="text" />/</td>
-				<td><input size="4" class="split-date fill-grid statusformat-l-cc-sp-d-sp-F-sp-Y show-weeks" id="date-to" name="toYear" value="" maxlength="4" type="text" /></td>
-				<td>
-					<a tabindex="0" aria-haspopup="true" role="button" id="fd-but-date-to" title="Show Calendar" class="date-picker-control" href="#date-to">
-						<span>&nbsp;</span>
-					</a>
-				</td>
-			</tr>
-
-		</table>  
-
-		<br/><br/>
-
-		<label for="output">Output Data to:</label>
-		<select name="output">
-			<option value="screen">Display List</option>
-			<option value="csv">CSV File</option>
-		</select>
-
-		<br/><br/>
-
-		<input type="submit" value="Run Report" />
-
-	</form>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 [% INCLUDE 'intranet-bottom.inc' %]
