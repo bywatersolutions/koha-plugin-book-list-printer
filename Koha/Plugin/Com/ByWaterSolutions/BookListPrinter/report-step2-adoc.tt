@@ -1,0 +1,29 @@
+= Book List
+:reproducible:
+:listing-caption: Listing
+:source-highlighter: rouge
+:pdf-page-size: Letter
+
+[%- USE AuthorisedValues %]
+[%- USE Koha %]
+== [% Koha.Preference('LibraryName') | html %]
+
+== Library [% FOREACH l IN locations %][% AuthorisedValues.GetByCode( 'LOC', l ) %][%- UNLESS loop.last %],[% END %][% END %]
+by
+[% SWITCH displayby %][% CASE 'title' %]Title[% CASE 'author' %]Author[% CASE 'subject' %]Subject[% END %]
+
+[%- SET tag='[%' %]
+[% tag %]header,cols=4*]
+|===
+|Title
+|Author
+|Call #
+|Barcode
+
+[%- FOREACH i IN items %]
+|[% i.biblio.title %]
+|[% i.biblio.author %]
+|[% i.itemcallnumber %]
+|[% i.barcode %]
+[% END %]
+|===

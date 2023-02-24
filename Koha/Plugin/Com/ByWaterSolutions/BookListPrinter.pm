@@ -64,7 +64,7 @@ sub report_step2 {
     my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
-    my $filename = 'report-step2-html.tt';
+    my $filename = 'report-step2-adoc.tt';
     my $template = $self->get_template({file => $filename});
 
     my $display_by = $cgi->param('display_by');
