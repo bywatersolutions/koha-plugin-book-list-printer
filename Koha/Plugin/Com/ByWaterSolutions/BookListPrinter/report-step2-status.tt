@@ -1,0 +1,72 @@
+[% USE AuthorisedValues %]
+[% SET footerjs = 1 %]
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Koha: Book List Printer</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+[% WRAPPER 'sub-header.inc' %]
+<div id="breadcrumbs">
+  <a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo;
+  <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo;
+  Book List Printer &rsaquo; 
+  Report &rsaquo; 
+  Set Parameters
+</div>
+[% END %]
+
+<div class="main container-fluid">
+    <div class="row">
+        <div id="processing" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+            Processing, please do not leave this page...
+        </div>
+
+        <div id="wait" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+            Please wait...
+        </div>
+        <div id="status" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+            Status: <span id="status_text"></span>
+        </div>
+        <div id="download" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+            Finished! <a id="file_download" href="">Download file</a>
+        </div>
+    </div>
+</div>
+
+[% MACRO jsinclude BLOCK %]
+<script>
+    let timer;
+
+    function checkstatus() {
+        const file = '[% status_file %]';
+        const url = '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3ABookListPrinter&method=report&status=' + encodeURIComponent(file);
+        console.log(url);
+        $.getJSON( url, function( data ) {
+            console.log(data);
+            if ( data.pdf_file ) {
+                const pdf_url = url + "&download=1";
+                $("#file_download").attr("href", pdf_url);
+                $("#status").hide();
+                $("#wait").hide();
+                $("#download").show();
+                window.clearTimeout(timer);
+            } else {
+                $("#status").html(data.status);
+                $("#wait").hide();
+                $("#download").hide();
+                $("#status").show();
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $("#status").hide();
+        $("#download").hide();
+        timer = setInterval(checkstatus, 1000);
+    });
+</script>
+[% END %]
+[% INCLUDE 'intranet-bottom.inc' %]

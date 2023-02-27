@@ -10,4 +10,7 @@ From the [release page](https://github.com/bywatersolutions/koha-plugin-book-lis
 
 ## Installing
 
-This plugin requires no special steps for installation.
+### Install asciidoctor-pdf
+
+This plugin requires asciidoctor-pdf, to install a Debian run `apt install ruby-asciidoctor-pdf`
+
