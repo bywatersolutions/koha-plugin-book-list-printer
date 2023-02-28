@@ -6,6 +6,7 @@ use base qw(Koha::Plugins::Base);
 
 use C4::Auth;
 use C4::Context;
+use Koha::DateUtils qw(dt_from_string output_pref);
 use Koha::Items;
 
 use Cwd qw(abs_path);
@@ -108,7 +109,8 @@ sub report_step2 {
         pid    => $$,
         status => 'Gathering data',
         pid    => $pid,
-        adoc   => $adoc_file
+        adoc_file   => $adoc_file,
+        updated => output_pref(dt_from_string()),
     };
     DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
@@ -125,6 +127,7 @@ sub report_step2 {
 
     $status->{count}  = $items->count;
     $status->{status} = 'Generating ASCIIDoc';
+    $status->{updated} = output_pref(dt_from_string());
     DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 
@@ -140,6 +143,7 @@ sub report_step2 {
       $template->{TEMPLATE}->error();
 
     $status->{status} = 'Generating PDF';
+    $status->{updated} = output_pref(dt_from_string());
     DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 
@@ -148,6 +152,7 @@ sub report_step2 {
 
     my $output = qx(asciidoctor-pdf $adoc_file);
     $status->{status}      = 'Finished';
+    $status->{updated} = output_pref(dt_from_string());
     $status->{pdf_file}    = $pdf_file;
     $status->{adoc_output} = $output;
     DumpFile( $status_file, $status );
@@ -161,6 +166,10 @@ sub report_status {
     my $file = $cgi->param('status');
     warn "FILE: $file";
     my $data = LoadFile($file);
+
+    my $filename = $data->{pdf_file} || $data->{adoc_file};
+    my $bytes = ( stat $filename )[7];
+    $data->{current_file_size} = $bytes;
 
     $self->output_html( to_json($data) );
 }
