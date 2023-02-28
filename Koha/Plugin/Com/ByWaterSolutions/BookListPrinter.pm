@@ -29,7 +29,7 @@ our $metadata = {
 };
 
 sub new {
-    my ($class, $args) = @_;
+    my ( $class, $args ) = @_;
 
     ## We need to add our metadata here so our base class can access it
     $args->{'metadata'} = $metadata;
@@ -44,83 +44,103 @@ sub new {
 }
 
 sub report {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
-    if ($cgi->param('output')) {
+    if ( $cgi->param('output') ) {
         $self->report_step2();
-    } elsif ($cgi->param('download')) {
+    }
+    elsif ( $cgi->param('download') ) {
         $self->report_download();
-    } elsif ($cgi->param('status')) {
+    }
+    elsif ( $cgi->param('status') ) {
         $self->report_status();
-    } else {
+    }
+    else {
         $self->report_step1();
     }
 }
 
 sub report_step1 {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
-    my $template = $self->get_template({file => 'report-step1.tt'});
+    my $template = $self->get_template( { file => 'report-step1.tt' } );
 
-    $template->param(asciidoctor_installed => is_cmd_installed('asciidoctor-pdf'),);
+    $template->param(
+        asciidoctor_installed => is_cmd_installed('asciidoctor-pdf') );
 
-    $self->output_html($template->output());
+    $self->output_html( $template->output() );
 }
 
 sub report_step2 {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
     my $display_by = $cgi->param('display_by');
 
-    my $order_by
-        = $display_by eq 'title'   ? 'biblio.title'
-        : $display_by eq 'author'  ? 'biblio.author'
-        : $display_by eq 'subject' ? 'subject'
-        :                            'title';
+    my $order_by =
+        $display_by eq 'title'   ? 'biblio.title'
+      : $display_by eq 'author'  ? 'biblio.author'
+      : $display_by eq 'subject' ? 'subject'
+      :                            'title';
 
-    my @locations = $cgi->multi_param('location');
+    my @locations  = $cgi->multi_param('location');
+    my $branchcode = $cgi->param('branchcode');
 
-    my ($afh, $adoc_file)   = tempfile(undef, SUFFIX => '.adoc');
-    my ($sfh, $status_file) = tempfile(undef, SUFFIX => '.yml');
+    my ( $afh, $adoc_file )   = tempfile( undef, SUFFIX => '.adoc' );
+    my ( $sfh, $status_file ) = tempfile( undef, SUFFIX => '.yml' );
     warn "ADOC: $adoc_file";
     warn "STATUS: $status_file";
 
     my $pid = fork;
 
     # Parent outputs status page and exits
-    if ($pid != 0) {
-        my $template = $self->get_template({file => 'report-step2-status.tt'});
-        $template->param(status_file => $status_file);
-        $self->output_html($template->output());
+    if ( $pid != 0 ) {
+        my $template =
+          $self->get_template( { file => 'report-step2-status.tt' } );
+        $template->param( status_file => $status_file );
+        $self->output_html( $template->output() );
         exit;
     }
 
-    my $status = {pid => $$, status => 'Gathering data', pid => $pid, adoc => $adoc_file};
-    DumpFile($status_file, $status);
+    my $status = {
+        pid    => $$,
+        status => 'Gathering data',
+        pid    => $pid,
+        adoc   => $adoc_file
+    };
+    DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 
     # Child gets to work
-    my $template = $self->get_template({file => 'report-step2-adoc.tt'});
+    my $template = $self->get_template( { file => 'report-step2-adoc.tt' } );
 
     my $search_params = {};
     $search_params->{permanent_location} = \@locations if @locations;
+    $search_params->{homebranch}         = $branchcode if $branchcode;
 
-    my $items = Koha::Items->search($search_params, {prefetch => 'biblio', order_by => {-asc => $order_by}});
+    my $items = Koha::Items->search( $search_params,
+        { prefetch => 'biblio', order_by => { -asc => $order_by } } );
 
     $status->{count}  = $items->count;
     $status->{status} = 'Generating ASCIIDoc';
-    DumpFile($status_file, $status);
+    DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 
-    $template->param(items => $items, locations => \@locations, displayby => $display_by);
-    $template->{TEMPLATE}->process($template->filename, $template->{VARS}, $afh) || die "Template process failed: ",
-        $template->{TEMPLATE}->error();
+    $template->param(
+        items      => $items,
+        locations  => \@locations,
+        homebranch => $branchcode,
+        displayby  => $display_by
+    );
+    $template->{TEMPLATE}
+      ->process( $template->filename, $template->{VARS}, $afh )
+      || die "Template process failed: ",
+      $template->{TEMPLATE}->error();
 
     $status->{status} = 'Generating PDF';
-    DumpFile($status_file, $status);
+    DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 
     my $pdf_file = $adoc_file;
@@ -130,24 +150,24 @@ sub report_step2 {
     $status->{status}      = 'Finished';
     $status->{pdf_file}    = $pdf_file;
     $status->{adoc_output} = $output;
-    DumpFile($status_file, $status);
+    DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
 }
 
 sub report_status {
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
     my $file = $cgi->param('status');
     warn "FILE: $file";
     my $data = LoadFile($file);
 
-    $self->output_html(to_json($data));
+    $self->output_html( to_json($data) );
 }
 
 sub report_download {
     warn "REPORT DOWNLOAD";
-    my ($self, $args) = @_;
+    my ( $self, $args ) = @_;
     my $cgi = $self->{'cgi'};
 
     my $file = $cgi->param('status');
@@ -158,13 +178,14 @@ sub report_download {
     my $filename = $data->{pdf_file};
     warn "PDF FILE: $filename";
 
-    my $bytes = (stat $filename)[7];
+    my $bytes = ( stat $filename )[7];
 
     print $cgi->header(
-        -attachment          => "list.pdf",
-        -type                => 'application/pdf',
+        -attachment => "list.pdf",
+        -type       => 'application/pdf',
+
         #-Content_Disposition => "attachment; filename=list.pdf",
-        -Content_Length      => "$bytes"
+        -Content_Length => "$bytes"
     );
 
     open FILE, "< $filename" or die "can't open : $!";
