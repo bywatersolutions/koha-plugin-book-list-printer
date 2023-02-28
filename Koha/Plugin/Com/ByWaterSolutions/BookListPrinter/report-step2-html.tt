@@ -1,8 +1,7 @@
-[% USE AuthorisedValues %]
-[% USE Koha %]
-[% INCLUDE 'doc-head-open.inc' %]
- <title>Koha: Book List Printer</title>
-[% INCLUDE 'doc-head-close.inc' %]
+[%- USE AuthorisedValues -%]
+[%- USE Koha -%]
+<head>
+  <title>Koha: Book List Printer</title>
 </head>
 <body>
 <div class="main container-fluid">
@@ -14,7 +13,7 @@
             <p class="text-center">
                 Library
                 [% FOREACH l IN locations %]
-                    [% AuthorisedValues.GetByCode( 'LOC', l ) %]
+                    [% AuthorisedValues.GetByCode( 'LOC', l ) | html %]
                     [%- UNLESS loop.last %],[% END %]
                 [% END %]
                 by
@@ -42,10 +41,10 @@
               <tbody>
                 [% FOREACH i IN items %]
                   <tr>
-                    <td>[% i.biblio.title %]</td>
-                    <td>[% i.biblio.author %]</td>
-                    <td>[% i.itemcallnumber %]</td>
-                    <td>[% i.barcode %]</td>
+                    <td>[% i.biblio.title | html %]</td>
+                    <td>[% i.biblio.author | html %]</td>
+                    <td>[% i.itemcallnumber | html %]</td>
+                    <td>[% i.barcode | html %]</td>
                   </tr>
                 [% END %]
               </tbody>

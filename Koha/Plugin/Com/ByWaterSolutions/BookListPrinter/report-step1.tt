@@ -19,7 +19,7 @@
 <div class="main container-fluid">
     <div class="row">
         <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
-          [% IF asciidoctor_installed %]
+          [% IF wkhtmltopdf_installed %]
 	        <form method="get">
               <input type="hidden" name="class" value="[% CLASS %]"/>
               <input type="hidden" name="method" value="[% METHOD %]"/>
@@ -60,7 +60,7 @@
               <button type="submit" class="btn btn-default">Submit</button>
             </form>
           [% ELSE %]
-            <p class="bg-danger">Please install `asciidoctor-pdf` before using this plugin.</p>
+            <p class="bg-danger">Please install `wkhtmltopdf` from https://wkhtmltopdf.org/downloads.html before using this plugin.</p>
           [% END %]
         </div>
     </div>

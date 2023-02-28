@@ -65,7 +65,7 @@ sub report_step1 {
 
     my $template = $self->get_template({file => 'report-step1.tt'});
 
-    $template->param(asciidoctor_installed => is_cmd_installed('asciidoctor-pdf'));
+    $template->param(wkhtmltopdf_installed => is_cmd_installed('wkhtmltopdf'));
 
     $self->output_html($template->output());
 }
@@ -85,9 +85,9 @@ sub report_step2 {
     my @locations  = $cgi->multi_param('location');
     my $branchcode = $cgi->param('branchcode');
 
-    my ($afh, $adoc_file)   = tempfile(undef, SUFFIX => '.adoc');
+    my ($afh, $html_file)   = tempfile(undef, SUFFIX => '.html');
     my ($sfh, $status_file) = tempfile(undef, SUFFIX => '.yml');
-    warn "ADOC: $adoc_file";
+    warn "ADOC: $html_file";
     warn "STATUS: $status_file";
 
     my $pid = fork;
@@ -100,18 +100,18 @@ sub report_step2 {
         exit;
     }
 
+    # Child gets to work
     my $status = {
         pid       => $$,
         status    => 'Gathering data',
         pid       => $pid,
-        adoc_file => $adoc_file,
+        html_file => $html_file,
         updated   => dt_from_string()->iso8601,
     };
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    # Child gets to work
-    my $template = $self->get_template({file => 'report-step2-adoc.tt'});
+    my $template = $self->get_template({file => 'report-step2-html.tt'});
 
     my $search_params = {};
     $search_params->{permanent_location} = \@locations if @locations;
@@ -134,14 +134,14 @@ sub report_step2 {
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    my $pdf_file = $adoc_file;
-    $pdf_file =~ s/adoc$/pdf/;
+    my $pdf_file = $html_file;
+    $pdf_file =~ s/html$/pdf/;
 
-    my $output = qx(asciidoctor-pdf $adoc_file);
+    my $output = qx(/usr/local/bin/wkhtmltopdf --default-header $html_file $pdf_file);
     $status->{status}      = 'Finished';
     $status->{updated}     = dt_from_string()->iso8601;
     $status->{pdf_file}    = $pdf_file;
-    $status->{adoc_output} = $output;
+    $status->{html_output} = $output;
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 }
@@ -154,7 +154,7 @@ sub report_status {
     warn "FILE: $file";
     my $data = LoadFile($file);
 
-    my $filename = $data->{pdf_file} || $data->{adoc_file};
+    my $filename = $data->{pdf_file} || $data->{html_file};
     my $bytes = ( stat $filename )[7];
     $data->{current_file_size} = $bytes;
 
@@ -192,12 +192,12 @@ sub report_download {
     }
     close FILE;
 
-    unlink $data->{adoc_file};
+    unlink $data->{html_file};
     unlink $data->{pdf_file};
 }
 
 sub is_cmd_installed {
-    my $check = `sh -c 'command -v $_[0]'`;
+    my $check = `sh -c 'command -v /usr/local/bin/$_[0]'`;
     return $check;
 }
 
