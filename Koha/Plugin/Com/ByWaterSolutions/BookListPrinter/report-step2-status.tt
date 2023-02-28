@@ -29,6 +29,9 @@
             <p>
                 Status: <span id="status_text"></span>
             </p>
+            </p>
+                Last updated: <span id="updated"></span>
+            </p>
             <p>
                 File size: <span id="current_file_size"></span> bytes
             </p>
@@ -49,6 +52,8 @@
         console.log(url);
         $.getJSON( url, function( data ) {
             console.log(data);
+
+            $("#updated").html(data.updated);
 
             if ( data.current_file_size ) {
                 $("#current_file_size").html(data.current_file_size);
