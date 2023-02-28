@@ -32,9 +32,6 @@
             </p>
                 Last updated: <span id="updated"></span>
             </p>
-            <p>
-                File size: <span id="current_file_size"></span> bytes
-            </p>
         </div>
         <div id="download" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             Finished! <a id="file_download" href="">Download file</a>
@@ -54,10 +51,6 @@
             console.log(data);
 
             $("#updated").html(data.updated);
-
-            if ( data.current_file_size ) {
-                $("#current_file_size").html(data.current_file_size);
-            }
 
             if ( data.pdf_file ) {
                 const pdf_url = url + "&download=1";

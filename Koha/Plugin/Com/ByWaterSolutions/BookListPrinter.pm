@@ -167,10 +167,6 @@ sub report_status {
     warn "FILE: $file";
     my $data = LoadFile($file);
 
-    my $filename = $data->{pdf_file} || $data->{adoc_file};
-    my $bytes = ( stat $filename )[7];
-    $data->{current_file_size} = $bytes;
-
     $self->output_html( to_json($data) );
 }
 
