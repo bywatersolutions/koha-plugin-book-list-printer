@@ -32,7 +32,7 @@
             </p>
                 Last updated: <span id="updated"></span>
             </p>
-            <p>
+            <p id="current_file_size_p">
                 File size: <span id="current_file_size">0</span> bytes
             </p>
         </div>
@@ -60,6 +60,9 @@
 
             if ( data.current_file_size ) {
                 $("#current_file_size").html(data.current_file_size);
+                $("#current_file_size_p").show();
+            } else {
+                $("#current_file_size_p").hide();
             }
 
             if ( data.error ) {
