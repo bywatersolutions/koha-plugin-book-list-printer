@@ -137,10 +137,9 @@ sub report_step2 {
         homebranch => $branchcode,
         displayby  => $display_by
     );
-    $template->{TEMPLATE}
-      ->process( $template->filename, $template->{VARS}, $afh )
-      || $status->{error} = "Template process failed: " .
-      $template->{TEMPLATE}->error();
+    my $ok = $template->{TEMPLATE}->process( $template->filename, $template->{VARS}, $afh );
+    $status->{error} = "Template process failed: " .
+      $template->{TEMPLATE}->error() unless $ok;
 
     $status->{status}  = 'Generating PDF';
     $status->{updated} = dt_from_string()->iso8601;
