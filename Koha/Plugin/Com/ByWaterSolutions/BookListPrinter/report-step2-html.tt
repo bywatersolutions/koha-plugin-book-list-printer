@@ -2,54 +2,63 @@
 [%- USE Koha -%]
 <head>
   <title>Koha: Book List Printer</title>
+
+    <style>
+        table, th, td {
+          border: 0px solid black;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 0px;
+        }
+        th {
+          background-color: #76C2F8;
+          text-align: left;
+        }
+    </style>
 </head>
 <body>
-<div class="main container-fluid">
-    <div class="row">
-        <div class="">
-            <p class="text-center">
-                [% Koha.Preference('LibraryName') | html %]
-            </p>
-            <p class="text-center">
-                Library
-                [% FOREACH l IN locations %]
-                    [% AuthorisedValues.GetByCode( 'LOC', l ) | html %]
-                    [%- UNLESS loop.last %],[% END %]
-                [% END %]
-                by
-                [% SWITCH displayby %]
-                    [% CASE 'title' %] Title
-                    [% CASE 'author' %] Author
-                    [% CASE 'subject' %] Subject
-                [% END %]
-            </p>
-        </div>
+    <div>
+        <center>
+            [% Koha.Preference('LibraryName') | html %]
+        </center>
     </div>
 
-    <div class="row">
-        <div class="">
-            <table border=1>
-              <thead>
-                <tr> 
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Call #</th>  
-                  <th>Barcode</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                [% FOREACH i IN items %]
-                  <tr>
-                    <td>[% i.biblio.title | html %]</td>
-                    <td>[% i.biblio.author | html %]</td>
-                    <td>[% i.itemcallnumber | html %]</td>
-                    <td>[% i.barcode | html %]</td>
-                  </tr>
-                [% END %]
-              </tbody>
-            </table> 
-        </div>
+    <div>
+        <center>
+            Library
+            [% FOREACH l IN locations %]
+                [% AuthorisedValues.GetByCode( 'LOC', l ) | html %]
+                [%- UNLESS loop.last %],[% END %]
+            [% END %]
+            by
+            [% SWITCH displayby %]
+                [% CASE 'title' %] Title
+                [% CASE 'author' %] Author
+                [% CASE 'subject' %] Subject
+            [% END %]
+        </center>
     </div>
-</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Call #</th>
+          <th>Barcode</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        [% FOREACH i IN items %]
+          <tr>
+            <td>[% i.biblio.title | html %]</td>
+            <td>[% i.biblio.author | html %]</td>
+            <td>[% i.itemcallnumber | html %]</td>
+            <td>[% i.barcode | html %]</td>
+          </tr>
+        [% END %]
+      </tbody>
+    </table>
 </body>
