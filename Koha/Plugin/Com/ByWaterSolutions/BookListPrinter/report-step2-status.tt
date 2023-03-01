@@ -91,6 +91,7 @@
     $(document).ready(function() {
         $("#processing").hide();
         $("#download").hide();
+        $("#error").hide();
         timer = setInterval(checkstatus, 1000);
     });
 </script>
