@@ -18,14 +18,14 @@
 
 <div class="main container-fluid">
     <div class="row">
-        <div id="processing" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+        <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             Processing, please do not leave this page...
         </div>
 
         <div id="wait" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             Please wait...
         </div>
-        <div id="status" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+        <div id="processing" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             <p>
                 Status: <span id="status_text"></span>
             </p>
@@ -33,11 +33,14 @@
                 Last updated: <span id="updated"></span>
             </p>
             <p>
-                File size: <span id="current_file_size"></span> bytes
+                File size: <span id="current_file_size">0</span> bytes
             </p>
         </div>
         <div id="download" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             Finished! <a id="file_download" href="">Download file</a>
+        </div>
+        <div id="error" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
+            ERROR: <span id="error_message"></span>
         </div>
     </div>
 </div>
@@ -59,24 +62,34 @@
                 $("#current_file_size").html(data.current_file_size);
             }
 
+            if ( data.error ) {
+                $("#error_message").html(data.error);
+                $("#error").show();
+            }
+
             if ( data.pdf_file ) {
+                window.clearTimeout(timer);
+
                 const pdf_url = url + "&download=1";
                 $("#file_download").attr("href", pdf_url);
-                $("#status").hide();
+
+                $("#processing").hide();
                 $("#wait").hide();
+
                 $("#download").show();
-                window.clearTimeout(timer);
             } else {
                 $("#status").html(data.status);
-                $("#wait").hide();
+
                 $("#download").hide();
-                $("#status").show();
+                $("#wait").hide();
+
+                $("#processing").show();
             }
         });
     }
 
     $(document).ready(function() {
-        $("#status").hide();
+        $("#processing").hide();
         $("#download").hide();
         timer = setInterval(checkstatus, 1000);
     });

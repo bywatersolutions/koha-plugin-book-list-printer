@@ -126,7 +126,7 @@ sub report_step2 {
         { prefetch => 'biblio', order_by => { -asc => $order_by } } );
 
     $status->{count}   = $items->count;
-    $status->{status}  = 'Generating ASCIIDoc';
+    $status->{status}  = 'Generating HTML';
     $status->{updated} = dt_from_string()->iso8601;
     DumpFile( $status_file, $status );
     warn Data::Dumper::Dumper($status);
@@ -139,7 +139,7 @@ sub report_step2 {
     );
     $template->{TEMPLATE}
       ->process( $template->filename, $template->{VARS}, $afh )
-      || die "Template process failed: ",
+      || $status->{error} = "Template process failed: " .
       $template->{TEMPLATE}->error();
 
     $status->{status}  = 'Generating PDF';
@@ -151,7 +151,11 @@ sub report_step2 {
     $pdf_file =~ s/html$/pdf/;
 
     my $output =
-      qx(/usr/local/bin/wkhtmltopdf --default-header $html_file $pdf_file);
+      qx(/usr/local/bin/wkhtmltopdf --default-header $html_file $pdf_file 2>&1);
+    my $rc = $?;
+    $rc = $rc >> 8 unless ($rc == -1);
+    $status->{error} = $output if $rc;
+
     $status->{status}      = 'Finished';
     $status->{updated}     = dt_from_string()->iso8601;
     $status->{pdf_file}    = $pdf_file;
