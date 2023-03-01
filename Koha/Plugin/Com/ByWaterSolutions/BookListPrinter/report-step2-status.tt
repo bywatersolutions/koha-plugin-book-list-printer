@@ -80,7 +80,7 @@
 
                 $("#download").show();
             } else {
-                $("#status").html(data.status);
+                $("#status_text").html(data.status);
 
                 $("#download").hide();
                 $("#wait").hide();
