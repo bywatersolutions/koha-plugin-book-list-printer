@@ -11,8 +11,7 @@
 <div id="breadcrumbs">
   <a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo;
   <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo;
-  Book List Printer &rsaquo; 
-  Report &rsaquo; 
+  <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3ACom%3A%3AByWaterSolutions%3A%3ABookListPrinter&method=report">Book List Printer</a> &rsaquo; 
   Set Parameters
 </div>
 
