@@ -149,8 +149,23 @@ sub report_step2 {
     my $pdf_file = $html_file;
     $pdf_file =~ s/html$/pdf/;
 
-    my $output =
-      qx(/usr/local/bin/wkhtmltopdf --default-header $html_file $pdf_file 2>&1);
+    my $command = qq{/usr/local/bin/wkhtmltopdf \
+                    --page-size letter \
+                    --header-left "" \
+                    --header-right "[page] of [toPage]" \
+                    --header-spacing 3 \
+                    --header-font-size 10 \
+                    --header-line --footer-line \
+                    --footer-spacing 4 \
+                    --footer-left "" \
+                    --footer-right '' \
+                    --footer-font-size 10 \
+                    --margin-top 20mm \
+                    --margin-bottom 20mm \
+                    --margin-left 15mm \
+                    --margin-right 15mm \
+                    $html_file $pdf_file 2>&1 };
+    my $output = qx($command);
     my $rc = $?;
     $rc = $rc >> 8 unless ($rc == -1);
     $status->{error} = $output if $rc;
