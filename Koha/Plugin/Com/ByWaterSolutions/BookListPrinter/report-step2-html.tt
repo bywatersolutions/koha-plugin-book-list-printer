@@ -43,8 +43,21 @@
     <table>
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Author</th>
+          [%# Column sorted by always comes first %]
+          [% IF displayby == "title" %]
+              <th>Title</th>
+          [% ELSIF displayby == "author" %]
+              <th>Author</th>
+          [% ELSIF displayby == "subject" %]
+              <th>Subject</th>
+          [% END %]
+
+          [% UNLESS  displayby == "title" %]
+              <th>Title</th>
+          [% END %]
+          [% UNLESS  displayby == "author" %]
+              <th>Author</th>
+          [% END %]
           <th>Call #</th>
           <th>Barcode</th>
         </tr>
@@ -53,8 +66,20 @@
       <tbody>
         [% FOREACH i IN items %]
           <tr>
-            <td>[% i.biblio.title | html %]</td>
-            <td>[% i.biblio.author | html %]</td>
+              [% IF displayby == "title" %]
+                  <td>[% i.biblio.title | html %]</td>
+              [% ELSIF displayby == "author" %]
+                  <td>[% i.biblio.author | html %]</td>
+              [% ELSIF displayby == "subject" %]
+                  <td>SUBJECT GOES HERE</td>
+              [% END %]
+
+              [% UNLESS  displayby == "title" %]
+                  <td>[% i.biblio.title | html %]</td>
+              [% END %]
+              [% UNLESS  displayby == "author" %]
+                  <td>[% i.biblio.author | html %]</td>
+              [% END %]
             <td>[% i.itemcallnumber | html %]</td>
             <td>[% i.barcode | html %]</td>
           </tr>
