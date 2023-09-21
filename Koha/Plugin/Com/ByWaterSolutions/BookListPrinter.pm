@@ -149,7 +149,7 @@ sub report_step2 {
     my $pdf_file = $html_file;
     $pdf_file =~ s/html$/pdf/;
 
-    my $command = qq{wkhtmltopdf --page-size letter  --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
+    my $command = qq{/usr/local/bin/wkhtmltopdf --page-size letter  --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
     my $output = qx($command);
     my $rc = $?;
     $rc = $rc >> 8 unless ($rc == -1);
@@ -214,7 +214,7 @@ sub report_download {
 }
 
 sub is_cmd_installed {
-    my $check = `sh -c 'command -v $_[0]'`;
+    my $check = `sh -c 'command -v /usr/local/bin/$_[0]'`;
     return $check;
 }
 
