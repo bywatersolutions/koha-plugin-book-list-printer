@@ -59,7 +59,6 @@
               <th>Author</th>
           [% END %]
           <th>Call #</th>
-          <th>Barcode</th>
         </tr>
       </thead>
 
@@ -84,7 +83,6 @@
                   <td>[% i.biblio.author | html %]</td>
               [% END %]
             <td>[% i.itemcallnumber | html %]</td>
-            <td>[% i.barcode | html %]</td>
           </tr>
           [%- seen.$biblionumber = 1 %]
         [% END %]
