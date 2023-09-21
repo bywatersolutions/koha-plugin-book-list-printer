@@ -64,7 +64,10 @@
       </thead>
 
       <tbody>
+        [%- SET seen = {} %]
         [% FOREACH i IN items %]
+          [%- SET biblionumber = i.biblionumber %]
+          [%- NEXT IF seen.$biblionumber %]
           <tr>
               [% IF displayby == "title" %]
                   <td>[% i.biblio.title | html %]</td>
@@ -83,6 +86,7 @@
             <td>[% i.itemcallnumber | html %]</td>
             <td>[% i.barcode | html %]</td>
           </tr>
+          [%- seen.$biblionumber = 1 %]
         [% END %]
       </tbody>
     </table>

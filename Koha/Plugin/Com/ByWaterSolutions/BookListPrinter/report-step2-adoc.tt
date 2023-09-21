@@ -1,3 +1,4 @@
+[%- SET seen = {} %]
 = Book List
 :reproducible:
 :listing-caption: Listing
@@ -21,9 +22,12 @@ by
 |Barcode
 
 [%- FOREACH i IN items %]
-|[% i.biblio.title %]
+[%- SET biblionumber = i.biblionumber %]
+[%- NEXT IF seen.$biblionumber %]
+|[% i.biblio.title %][% biblionumber %]
 |[% i.biblio.author %]
 |[% i.itemcallnumber %]
 |[% i.barcode %]
+[%- SET seen.$biblionumber = 1 %]
 [% END %]
 |===
