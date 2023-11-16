@@ -218,6 +218,40 @@ sub is_cmd_installed {
     return $check;
 }
 
+sub cronjob_nightly {
+    my ( $self ) = @_;
+
+    my $dbh = C4::Context->dbh;
+
+    my $delete_sth = $dbh->prepare(q{DELETE FROM plugin_book_list_printer_subjects WHERE biblionumber = ?});
+    my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ? )});
+
+    my $biblios = Koha::Biblios->search();
+    while ( my $biblio = $biblios->next() ) {
+        my $count = 0;
+        my @subjects;
+
+        my $rec = $biblio->metadata->record;
+        next unless $rec;
+        
+
+    }
+}
+
+sub install {
+    my ( $self, $args ) = @_;
+
+    return C4::Context->dbh->do(q{
+        CREATE TABLE `plugin_book_list_printer_subjects` (
+            `biblionumber` INT(11) NOT NULL,
+            `order` INT(11) NOT NULL DEFAULT '0',
+            `subject` VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+            KEY `bnidx` (`biblionumber`,`order`),
+            CONSTRAINT `bfk_borrowers` FOREIGN KEY (`biblionumber`) REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB;
+    });
+}
+
 #my $schema = Koha::Database->new->schema;
 #$schema->storage->debug(1);
 
