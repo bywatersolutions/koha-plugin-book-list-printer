@@ -220,6 +220,7 @@ sub is_cmd_installed {
 
 sub cronjob_nightly {
     my ( $self ) = @_;
+    warn "Koha::Plugin::Com::ByWaterSolutions::BookListPrinter::cronjob_nightly";
 
     my $dbh = C4::Context->dbh;
 
@@ -228,13 +229,45 @@ sub cronjob_nightly {
 
     my $biblios = Koha::Biblios->search();
     while ( my $biblio = $biblios->next() ) {
-        my $count = 0;
-        my @subjects;
+        warn "WORKING ON BIBLIO " . $biblio->id;
+        my @subjects; # We want to limit to only 3 subjects per bib
 
         my $rec = $biblio->metadata->record;
         next unless $rec;
-        
 
+        # First, look for a first 655
+        if ( my $f = $rec->field('655') ) {
+            my @fields;
+            push( @fields, $f->subfield('a') ) if $f->subfield('a');
+            push( @fields, $f->subfield('2') ) if $f->subfield('2');
+            my $s = join(' - ', @fields );
+            warn "FOUND SUBJECT $s";
+            push( @subjects, $s ) if @fields;
+        }
+
+        # Next, fill the subjects list with 650's
+        my @f = $rec->field('650');
+        foreach my $f ( @f ) {
+            next if scalar @subjects >= 3;
+
+            my @fields;
+
+            push( @fields, $f->subfield('a') ) if $f->subfield('a');
+            push( @fields, $f->subfield('x') ) if $f->subfield('x');
+            push( @fields, $f->subfield('2') ) if $f->subfield('2');
+            my $s = join(' - ', @fields );
+            warn "FOUND SUBJECT $s";
+            push( @subjects, $s ) if @fields;
+        }
+
+        if ( @subjects ) {
+            $delete_sth->execute( $biblio->id );
+            my $i = 0;
+            foreach my $s ( @subjects ) {
+                $insert_sth->execute( $biblio->id, $i, $s );
+                $i++;
+            }
+        }
     }
 }
 
