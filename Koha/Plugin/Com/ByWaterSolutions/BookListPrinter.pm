@@ -13,6 +13,7 @@ use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Temp qw(tempfile tempdir);
 use JSON       qw(to_json);
+use Try::Tiny;
 use YAML       qw(DumpFile LoadFile);
 
 our $VERSION         = "{VERSION}";
@@ -232,7 +233,13 @@ sub cronjob_nightly {
         warn "WORKING ON BIBLIO " . $biblio->id;
         my @subjects; # We want to limit to only 3 subjects per bib
 
-        my $rec = $biblio->metadata->record;
+        my $rec;
+        try {
+            $rec = $biblio->metadata->record;
+        } catch {
+            warn "ERROR: BAD RECORD";
+            next;
+        };
         next unless $rec;
 
         # First, look for a first 655
