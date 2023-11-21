@@ -4,17 +4,21 @@
   <title>Koha: Book List Printer</title>
 
     <style>
+        table {
+          width: 100%;
+        }
         table, th, td {
           border: 0px solid black;
           border-collapse: collapse;
         }
         th, td {
-          padding: 0px;
+          padding: 1px;
         }
         th {
           background-color: #76C2F8;
           text-align: left;
         }
+        .subject td { padding-bottom: 15px; } 
     </style>
 </head>
 <body>
@@ -35,57 +39,94 @@
             [% SWITCH displayby %]
                 [% CASE 'title' %] Title
                 [% CASE 'author' %] Author
-                [% CASE 'subject' %] Subject
+                [% CASE 'subject650' %] Subject (650)
+                [% CASE 'subject655' %] Subject (655)
             [% END %]
         </center>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          [%# Column sorted by always comes first %]
-          [% IF displayby == "title" %]
+    [% IF displayby.search('subject') %]
+        <table class="subject">
+          <thead>
+            <tr>
               <th>Title</th>
-          [% ELSIF displayby == "author" %]
               <th>Author</th>
-          [% ELSIF displayby == "subject" %]
-              <th>Subject</th>
-          [% END %]
+              <th>Call #</th>
+              <th>Barcode #</th>
+            </tr>
+          </thead>
 
-          [% UNLESS  displayby == "title" %]
-              <th>Title</th>
-          [% END %]
-          [% UNLESS  displayby == "author" %]
-              <th>Author</th>
-          [% END %]
-          <th>Call #</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        [%- SET seen = {} %]
-        [% FOREACH i IN items %]
-          [%- SET biblionumber = i.biblionumber %]
-          [%- NEXT IF seen.$biblionumber %]
-          <tr>
+          <tbody>
+            [% FOREACH i IN items %]
+                [% SET item = i.biblio.items.next %]
+                <tr>
+                    <td>
+                        [% i.biblio.title | html %]
+                        <br/>
+                        [% i.subject | html %]
+                        <br/>
+                    </td>
+                    <td>
+                        [% i.biblio.author | html %]
+                    </td>
+                    <td>
+                        [% item.itemcallnumber | html %]
+                    </td>
+                    <td>
+                        [% item.barcode | html %]
+                    </td>
+                </tr>
+            [% END %]
+          </tbody>
+        </table>
+    [% ELSE %]
+        <table>
+          <thead>
+            <tr>
+              [%# Column sorted by always comes first %]
               [% IF displayby == "title" %]
-                  <td>[% i.biblio.title | html %]</td>
+                  <th>Title</th>
               [% ELSIF displayby == "author" %]
-                  <td>[% i.biblio.author | html %]</td>
+                  <th>Author</th>
               [% ELSIF displayby == "subject" %]
-                  <td>SUBJECT GOES HERE</td>
+                  <th>Subject</th>
               [% END %]
 
               [% UNLESS  displayby == "title" %]
-                  <td>[% i.biblio.title | html %]</td>
+                  <th>Title</th>
               [% END %]
               [% UNLESS  displayby == "author" %]
-                  <td>[% i.biblio.author | html %]</td>
+                  <th>Author</th>
               [% END %]
-            <td>[% i.itemcallnumber | html %]</td>
-          </tr>
-          [%- seen.$biblionumber = 1 %]
-        [% END %]
-      </tbody>
-    </table>
+              <th>Call #</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            [%- SET seen = {} %]
+            [% FOREACH i IN items %]
+              [%- SET biblionumber = i.biblionumber %]
+              [%- NEXT IF seen.$biblionumber %]
+              <tr>
+                  [% IF displayby == "title" %]
+                      <td>[% i.biblio.title | html %]</td>
+                  [% ELSIF displayby == "author" %]
+                      <td>[% i.biblio.author | html %]</td>
+                  [% ELSIF displayby == "subject" %]
+                      <td>SUBJECT GOES HERE</td>
+                  [% END %]
+
+                  [% UNLESS  displayby == "title" %]
+                      <td>[% i.biblio.title | html %]</td>
+                  [% END %]
+                  [% UNLESS  displayby == "author" %]
+                      <td>[% i.biblio.author | html %]</td>
+                  [% END %]
+                <td>[% i.itemcallnumber | html %]</td>
+              </tr>
+              [%- seen.$biblionumber = 1 %]
+            [% END %]
+          </tbody>
+        </table>
+    [% END %]
 </body>

@@ -52,7 +52,8 @@
                 <select class="form-control" id="display_by" name="display_by">
                   <option value="title">Title</option>
                   <option value="author">Author</option>
-                  <option value="subject">Subject</option>
+                  <option value="subject655">Subject (655)</option>
+                  <option value="subject650">Subject (650)</option>
                 </select>
               </div>
 

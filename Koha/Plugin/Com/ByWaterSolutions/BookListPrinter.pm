@@ -81,12 +81,6 @@ sub report_step2 {
 
     my $display_by = $cgi->param('display_by');
 
-    my $order_by =
-        $display_by eq 'title'   ? 'biblio.title'
-      : $display_by eq 'author'  ? 'biblio.author'
-      : $display_by eq 'subject' ? 'subject'
-      :                            'title';
-
     my @locations  = $cgi->multi_param('location');
     my $branchcode = $cgi->param('branchcode');
 
@@ -123,10 +117,32 @@ sub report_step2 {
     $search_params->{permanent_location} = \@locations if @locations;
     $search_params->{homebranch}         = $branchcode if $branchcode;
 
-    my $items = Koha::Items->search( $search_params,
-        { prefetch => 'biblio', order_by => { -asc => $order_by } } );
+    my $items;
 
-    $status->{count}   = $items->count;
+    if ( $display_by =~ /^subject/ ) {
+        my $tag = $display_by eq 'subject650a'? '650' : '655';
+        my $query = "SELECT * FROM plugin_book_list_printer_subjects WHERE tag = ? ORDER BY subject";
+        my $sth = C4::Context->dbh->prepare( $query );
+        $sth->execute($tag);
+
+        my @items;
+        while ( my $s = $sth->fetchrow_hashref ) {
+            $s->{biblio} = Koha::Biblios->find( $s->{biblionumber} );
+            push( @items, $s );
+        }
+        $items = \@items;
+    } else {
+        my $order_by =
+            $display_by eq 'title'   ? { -asc => 'biblio.title' }
+          : $display_by eq 'author'  ? { -asc => 'biblio.author' }
+          :                            { -asc => 'biblio.title' };
+
+        $items = Koha::Items->search( $search_params,
+            { prefetch => { 'biblio' => 'biblio_metadatas' }, order_by => $order_by } );
+
+        $status->{count}   = $items->count;
+    }
+
     $status->{status}  = 'Generating HTML';
     $status->{updated} = dt_from_string()->iso8601;
     DumpFile( $status_file, $status );
@@ -226,7 +242,7 @@ sub cronjob_nightly {
     my $dbh = C4::Context->dbh;
 
     my $delete_sth = $dbh->prepare(q{DELETE FROM plugin_book_list_printer_subjects WHERE biblionumber = ?});
-    my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ? )});
+    my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ?, ? )});
 
     my $biblios = Koha::Biblios->search();
     while ( my $biblio = $biblios->next() ) {
@@ -249,7 +265,7 @@ sub cronjob_nightly {
             push( @fields, $f->subfield('2') ) if $f->subfield('2');
             my $s = join(' - ', @fields );
             warn "FOUND SUBJECT $s";
-            push( @subjects, $s ) if @fields;
+            push( @subjects, { subject => $s, tag => '655' } ) if @fields;
         }
 
         # Next, fill the subjects list with 650's
@@ -264,14 +280,14 @@ sub cronjob_nightly {
             push( @fields, $f->subfield('2') ) if $f->subfield('2');
             my $s = join(' - ', @fields );
             warn "FOUND SUBJECT $s";
-            push( @subjects, $s ) if @fields;
+            push( @subjects, { subject => $s, tag => '650' } ) if @fields;
         }
 
         if ( @subjects ) {
             $delete_sth->execute( $biblio->id );
             my $i = 0;
             foreach my $s ( @subjects ) {
-                $insert_sth->execute( $biblio->id, $i, $s );
+                $insert_sth->execute( $biblio->id, $i, $s->{tag}, $s->{subject} );
                 $i++;
             }
         }
@@ -285,8 +301,9 @@ sub install {
         CREATE TABLE `plugin_book_list_printer_subjects` (
             `biblionumber` INT(11) NOT NULL,
             `order` INT(11) NOT NULL DEFAULT '0',
+            `tag` VARCHAR(3),
             `subject` VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-            KEY `bnidx` (`biblionumber`,`order`),
+            KEY `bnidx` (`biblionumber`,`order`, `tag`),
             CONSTRAINT `bfk_borrowers` FOREIGN KEY (`biblionumber`) REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB;
     });
