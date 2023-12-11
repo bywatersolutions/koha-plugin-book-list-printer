@@ -9,6 +9,7 @@ use C4::Context;
 use Koha::DateUtils qw(dt_from_string);
 use Koha::Items;
 
+use Array::Utils qw(:all);
 use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Temp qw(tempfile tempdir);
@@ -82,6 +83,7 @@ sub report_step2 {
     my $display_by = $cgi->param('display_by');
 
     my @locations  = $cgi->multi_param('location');
+    my @itemtypes  = $cgi->multi_param('itemtype');
     my $branchcode = $cgi->param('branchcode');
 
     my ( $afh, $html_file )   = tempfile( undef, SUFFIX => '.html' );
@@ -113,10 +115,6 @@ sub report_step2 {
 
     my $template = $self->get_template( { file => 'report-step2-html.tt' } );
 
-    my $search_params = {};
-    $search_params->{permanent_location} = \@locations if @locations;
-    $search_params->{homebranch}         = $branchcode if $branchcode;
-
     my $items;
 
     if ( $display_by =~ /^subject/ ) {
@@ -128,10 +126,23 @@ sub report_step2 {
         my @items;
         while ( my $s = $sth->fetchrow_hashref ) {
             $s->{biblio} = Koha::Biblios->find( $s->{biblionumber} );
+
+            if ( @itemtypes ) {
+                my $biblio = $s->{biblio};
+                my @itypes = $biblio->items->get_column('itype');
+                my @isect = intersect(@itypes, @itemtypes);
+                next unless @isect;
+            }
+
             push( @items, $s );
         }
         $items = \@items;
     } else {
+        my $search_params = {};
+        $search_params->{permanent_location} = \@locations if @locations;
+        $search_params->{homebranch}         = $branchcode if $branchcode;
+        $search_params->{itype}              = \@itemtypes if @itemtypes;
+
         my $order_by =
             $display_by eq 'title'   ? { -asc => 'biblio.title' }
           : $display_by eq 'author'  ? { -asc => 'biblio.author' }
