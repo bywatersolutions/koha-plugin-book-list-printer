@@ -13,12 +13,16 @@
         }
         th, td {
           padding: 1px;
+          margin: 1px;
         }
         th {
           background-color: #76C2F8;
           text-align: left;
         }
-        .subject td { padding-bottom: 15px; } 
+        .subject td { padding-bottom: 1px; }
+        .subject-heading {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -57,14 +61,20 @@
           </thead>
 
           <tbody>
+            [% SET subject = "" %]
             [% FOREACH i IN items %]
                 [% SET item = i.biblio.items.next %]
+                [% IF i.subject != subject %]
+                    [% SET subject = i.subject %]
+                    <tr>
+                        <td colspan="3">
+                            <span class="subject-heading">[% i.subject | html %]</span>
+                        </td>
+                    </tr>
+                [% END %]
                 <tr>
                     <td>
                         [% i.biblio.title | html %]
-                        <br/>
-                        [% i.subject | html %]
-                        <br/>
                     </td>
                     <td>
                         [% i.biblio.author | html %]
