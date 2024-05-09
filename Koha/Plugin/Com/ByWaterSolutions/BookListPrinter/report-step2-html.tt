@@ -127,7 +127,10 @@
                   [% END %]
 
                   [% UNLESS  displayby == "title" %]
-                      <td>[% i.biblio.title | html %]</td>
+                      <td>
+                          [%- i.biblio.title | html -%]
+                          [%- IF i.biblio.seriestitle -%] [[% i.biblio.seriestitle | html %]] [%- END -%]
+                      </td>
                   [% END %]
                   [% UNLESS  displayby == "author" %]
                       <td>[% i.biblio.author | html %]</td>
