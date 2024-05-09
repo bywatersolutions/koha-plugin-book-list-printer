@@ -119,9 +119,50 @@ sub report_step2 {
 
     if ( $display_by =~ /^subject/ ) {
         my $tag = $display_by eq 'subject650a'? '650' : '655';
-        my $query = "SELECT * FROM plugin_book_list_printer_subjects WHERE tag = ? ORDER BY subject";
+
+        my @parameters;
+
+        my $query = q{
+                SELECT plugin_book_list_printer_subjects.*
+                FROM plugin_book_list_printer_subjects
+                LEFT JOIN biblio USING ( biblionumber )
+                LEFT JOIN biblioitems USING ( biblionumber )
+                LEFT JOIN items USING ( biblionumber )
+                WHERE tag = ?
+            };
+        push( @parameters, $tag );
+
+        if ( @itemtypes ) {
+            my $in_string = join( ',', map { "\"$_\"" } @itemtypes );
+            $query .= qq{
+                AND (
+                    biblioitems.itemtype IN ( $in_string ) 
+                    OR
+                    items.itype IN ( $in_string )
+                )
+            };
+        }
+
+        if ( @locations ) {
+            my $in_string = join( ',', map { "\"$_\"" } @locations );
+            $query .= qq{
+                AND items.location IN ( $in_string )
+            };
+        }
+
+        if ( $branchcode ) {
+            $query .= q{
+                AND homebranch = ?
+            };
+            push( @parameters, $branchcode );
+        }
+
+        $query .= "GROUP BY biblionumber ORDER BY subject";
+
+        warn "QUERY: " . Data::Dumper::Dumper( $query );
+        warn "PARAMS: " . Data::Dumper::Dumper( @parameters );
         my $sth = C4::Context->dbh->prepare( $query );
-        $sth->execute($tag);
+        $sth->execute(@parameters);
 
         my @items;
         while ( my $s = $sth->fetchrow_hashref ) {
