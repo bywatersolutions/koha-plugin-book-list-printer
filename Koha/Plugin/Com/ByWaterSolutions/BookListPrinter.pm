@@ -10,12 +10,12 @@ use Koha::DateUtils qw(dt_from_string);
 use Koha::Items;
 
 use Array::Utils qw(:all);
-use Cwd qw(abs_path);
+use Cwd          qw(abs_path);
 use Data::Dumper;
 use File::Temp qw(tempfile tempdir);
 use JSON       qw(to_json);
 use Try::Tiny;
-use YAML       qw(DumpFile LoadFile);
+use YAML qw(DumpFile LoadFile);
 
 our $VERSION         = "{VERSION}";
 our $MINIMUM_VERSION = "{MINIMUM_VERSION}";
@@ -32,7 +32,7 @@ our $metadata = {
 };
 
 sub new {
-    my ( $class, $args ) = @_;
+    my ($class, $args) = @_;
 
     ## We need to add our metadata here so our base class can access it
     $args->{'metadata'} = $metadata;
@@ -47,37 +47,33 @@ sub new {
 }
 
 sub report {
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
-    if ( $cgi->param('output') ) {
+    if ($cgi->param('output')) {
         $self->report_step2();
-    }
-    elsif ( $cgi->param('download') ) {
+    } elsif ($cgi->param('download')) {
         $self->report_download();
-    }
-    elsif ( $cgi->param('status') ) {
+    } elsif ($cgi->param('status')) {
         $self->report_status();
-    }
-    else {
+    } else {
         $self->report_step1();
     }
 }
 
 sub report_step1 {
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
-    my $template = $self->get_template( { file => 'report-step1.tt' } );
+    my $template = $self->get_template({file => 'report-step1.tt'});
 
-    $template->param(
-        wkhtmltopdf_installed => is_cmd_installed('wkhtmltopdf') );
+    $template->param(wkhtmltopdf_installed => is_cmd_installed('wkhtmltopdf'));
 
-    $self->output_html( $template->output() );
+    $self->output_html($template->output());
 }
 
 sub report_step2 {
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
     my $display_by = $cgi->param('display_by');
@@ -86,19 +82,18 @@ sub report_step2 {
     my @itemtypes  = $cgi->multi_param('itemtype');
     my $branchcode = $cgi->param('branchcode');
 
-    my ( $afh, $html_file )   = tempfile( undef, SUFFIX => '.html' );
-    my ( $sfh, $status_file ) = tempfile( undef, SUFFIX => '.yml' );
+    my ($afh, $html_file)   = tempfile(undef, SUFFIX => '.html');
+    my ($sfh, $status_file) = tempfile(undef, SUFFIX => '.yml');
     warn "ADOC: $html_file";
     warn "STATUS: $status_file";
 
     my $pid = fork;
 
     # Parent outputs status page and exits
-    if ( $pid != 0 ) {
-        my $template =
-          $self->get_template( { file => 'report-step2-status.tt' } );
-        $template->param( status_file => $status_file );
-        $self->output_html( $template->output() );
+    if ($pid != 0) {
+        my $template = $self->get_template({file => 'report-step2-status.tt'});
+        $template->param(status_file => $status_file);
+        $self->output_html($template->output());
         exit;
     }
 
@@ -110,15 +105,15 @@ sub report_step2 {
         html_file => $html_file,
         updated   => dt_from_string()->iso8601,
     };
-    DumpFile( $status_file, $status );
+    DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    my $template = $self->get_template( { file => 'report-step2-html.tt' } );
+    my $template = $self->get_template({file => 'report-step2-html.tt'});
 
     my $items;
 
-    if ( $display_by =~ /^subject/ ) {
-        my $tag = $display_by eq 'subject650'? '650' : '655';
+    if ($display_by =~ /^subject/) {
+        my $tag = $display_by eq 'subject650' ? '650' : '655';
 
         my @parameters;
 
@@ -130,10 +125,10 @@ sub report_step2 {
                 LEFT JOIN items USING ( biblionumber )
                 WHERE tag = ?
             };
-        push( @parameters, $tag );
+        push(@parameters, $tag);
 
-        if ( @itemtypes ) {
-            my $in_string = join( ',', map { "\"$_\"" } @itemtypes );
+        if (@itemtypes) {
+            my $in_string = join(',', map {"\"$_\""} @itemtypes);
             $query .= qq{
                 AND (
                     biblioitems.itemtype IN ( $in_string ) 
@@ -143,39 +138,39 @@ sub report_step2 {
             };
         }
 
-        if ( @locations ) {
-            my $in_string = join( ',', map { "\"$_\"" } @locations );
+        if (@locations) {
+            my $in_string = join(',', map {"\"$_\""} @locations);
             $query .= qq{
                 AND items.location IN ( $in_string )
             };
         }
 
-        if ( $branchcode ) {
+        if ($branchcode) {
             $query .= q{
                 AND homebranch = ?
             };
-            push( @parameters, $branchcode );
+            push(@parameters, $branchcode);
         }
 
         $query .= "GROUP BY subject, biblionumber ORDER BY subject";
 
-        warn "QUERY: " . Data::Dumper::Dumper( $query );
-        warn "PARAMS: " . Data::Dumper::Dumper( @parameters );
-        my $sth = C4::Context->dbh->prepare( $query );
+        warn "QUERY: " . Data::Dumper::Dumper($query);
+        warn "PARAMS: " . Data::Dumper::Dumper(@parameters);
+        my $sth = C4::Context->dbh->prepare($query);
         $sth->execute(@parameters);
 
         my @items;
-        while ( my $s = $sth->fetchrow_hashref ) {
-            $s->{biblio} = Koha::Biblios->find( $s->{biblionumber} );
+        while (my $s = $sth->fetchrow_hashref) {
+            $s->{biblio} = Koha::Biblios->find($s->{biblionumber});
 
-            if ( @itemtypes ) {
+            if (@itemtypes) {
                 my $biblio = $s->{biblio};
                 my @itypes = $biblio->items->get_column('itype');
-                my @isect = intersect(@itypes, @itemtypes);
+                my @isect  = intersect(@itypes, @itemtypes);
                 next unless @isect;
             }
 
-            push( @items, $s );
+            push(@items, $s);
         }
         $items = \@items;
     } else {
@@ -184,43 +179,38 @@ sub report_step2 {
         $search_params->{homebranch}         = $branchcode if $branchcode;
         $search_params->{itype}              = \@itemtypes if @itemtypes;
 
-        my $order_by =
-            $display_by eq 'title'   ? { -asc => 'biblio.title' }
-          : $display_by eq 'author'  ? { -asc => 'biblio.author' }
-          :                            { -asc => 'biblio.title' };
+        my $order_by
+            = $display_by eq 'title'  ? {-asc => 'biblio.title'}
+            : $display_by eq 'author' ? {-asc => 'biblio.author'}
+            :                           {-asc => 'biblio.title'};
 
-        $items = Koha::Items->search( $search_params,
-            { prefetch => { 'biblio' => 'biblio_metadatas' }, order_by => $order_by } );
+        $items = Koha::Items->search($search_params,
+            {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by});
 
-        $status->{count}   = $items->count;
+        $status->{count} = $items->count;
     }
 
     $status->{status}  = 'Generating HTML';
     $status->{updated} = dt_from_string()->iso8601;
-    DumpFile( $status_file, $status );
+    DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    $template->param(
-        items      => $items,
-        locations  => \@locations,
-        homebranch => $branchcode,
-        displayby  => $display_by
-    );
-    my $ok = $template->{TEMPLATE}->process( $template->filename, $template->{VARS}, $afh );
-    $status->{error} = "Template process failed: " .
-      $template->{TEMPLATE}->error() unless $ok;
+    $template->param(items => $items, locations => \@locations, homebranch => $branchcode, displayby => $display_by);
+    my $ok = $template->{TEMPLATE}->process($template->filename, $template->{VARS}, $afh);
+    $status->{error} = "Template process failed: " . $template->{TEMPLATE}->error() unless $ok;
 
     $status->{status}  = 'Generating PDF';
     $status->{updated} = dt_from_string()->iso8601;
-    DumpFile( $status_file, $status );
+    DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
     my $pdf_file = $html_file;
     $pdf_file =~ s/html$/pdf/;
 
-    my $command = qq{/usr/local/bin/wkhtmltopdf --page-size letter  --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
+    my $command
+        = qq{/usr/local/bin/wkhtmltopdf --page-size letter  --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
     my $output = qx($command);
-    my $rc = $?;
+    my $rc     = $?;
     $rc = $rc >> 8 unless ($rc == -1);
     $status->{error} = $output if $rc;
 
@@ -228,12 +218,12 @@ sub report_step2 {
     $status->{updated}     = dt_from_string()->iso8601;
     $status->{pdf_file}    = $pdf_file;
     $status->{html_output} = $output;
-    DumpFile( $status_file, $status );
+    DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 }
 
 sub report_status {
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
     my $file = $cgi->param('status');
@@ -241,15 +231,15 @@ sub report_status {
     my $data = LoadFile($file);
 
     my $filename = $data->{pdf_file} || $data->{html_file};
-    my $bytes    = ( stat $filename )[7];
+    my $bytes    = (stat $filename)[7];
     $data->{current_file_size} = $bytes;
 
-    $self->output_html( to_json($data) );
+    $self->output_html(to_json($data));
 }
 
 sub report_download {
     warn "REPORT DOWNLOAD";
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
     my $file = $cgi->param('status');
@@ -260,7 +250,7 @@ sub report_download {
     my $filename = $data->{pdf_file};
     warn "PDF FILE: $filename";
 
-    my $bytes = ( stat $filename )[7];
+    my $bytes = (stat $filename)[7];
 
     print $cgi->header(
         -attachment => "list.pdf",
@@ -288,7 +278,7 @@ sub is_cmd_installed {
 }
 
 sub cronjob_nightly {
-    my ( $self ) = @_;
+    my ($self) = @_;
     warn "Koha::Plugin::Com::ByWaterSolutions::BookListPrinter::cronjob_nightly";
 
     my $dbh = C4::Context->dbh;
@@ -297,9 +287,9 @@ sub cronjob_nightly {
     my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ?, ? )});
 
     my $biblios = Koha::Biblios->search();
-    while ( my $biblio = $biblios->next() ) {
+    while (my $biblio = $biblios->next()) {
         warn "WORKING ON BIBLIO " . $biblio->id;
-        my @subjects; # We want to limit to only 3 subjects per bib
+        my @subjects;    # We want to limit to only 3 subjects per bib
 
         my $rec;
         try {
@@ -311,35 +301,35 @@ sub cronjob_nightly {
         next unless $rec;
 
         # First, look for a first 655
-        if ( my $f = $rec->field('655') ) {
+        if (my $f = $rec->field('655')) {
             my @fields;
-            push( @fields, $f->subfield('a') ) if $f->subfield('a');
-            push( @fields, $f->subfield('2') ) if $f->subfield('2');
-            my $s = join(' - ', @fields );
+            push(@fields, $f->subfield('a')) if $f->subfield('a');
+            push(@fields, $f->subfield('2')) if $f->subfield('2');
+            my $s = join(' - ', @fields);
             warn "FOUND SUBJECT $s";
-            push( @subjects, { subject => $s, tag => '655' } ) if @fields;
+            push(@subjects, {subject => $s, tag => '655'}) if @fields;
         }
 
         # Next, fill the subjects list with 650's
         my @f = $rec->field('650');
-        foreach my $f ( @f ) {
+        foreach my $f (@f) {
             next if scalar @subjects >= 3;
 
             my @fields;
 
-            push( @fields, $f->subfield('a') ) if $f->subfield('a');
-            push( @fields, $f->subfield('x') ) if $f->subfield('x');
-            push( @fields, $f->subfield('2') ) if $f->subfield('2');
-            my $s = join(' - ', @fields );
+            push(@fields, $f->subfield('a')) if $f->subfield('a');
+            push(@fields, $f->subfield('x')) if $f->subfield('x');
+            push(@fields, $f->subfield('2')) if $f->subfield('2');
+            my $s = join(' - ', @fields);
             warn "FOUND SUBJECT $s";
-            push( @subjects, { subject => $s, tag => '650' } ) if @fields;
+            push(@subjects, {subject => $s, tag => '650'}) if @fields;
         }
 
-        if ( @subjects ) {
-            $delete_sth->execute( $biblio->id );
+        if (@subjects) {
+            $delete_sth->execute($biblio->id);
             my $i = 0;
-            foreach my $s ( @subjects ) {
-                $insert_sth->execute( $biblio->id, $i, $s->{tag}, $s->{subject} );
+            foreach my $s (@subjects) {
+                $insert_sth->execute($biblio->id, $i, $s->{tag}, $s->{subject});
                 $i++;
             }
         }
@@ -347,7 +337,7 @@ sub cronjob_nightly {
 }
 
 sub install {
-    my ( $self, $args ) = @_;
+    my ($self, $args) = @_;
 
     return C4::Context->dbh->do(q{
         CREATE TABLE `plugin_book_list_printer_subjects` (
