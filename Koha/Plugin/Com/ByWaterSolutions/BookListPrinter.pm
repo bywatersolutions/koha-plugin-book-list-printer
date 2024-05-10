@@ -152,7 +152,7 @@ sub report_step2 {
             push(@parameters, $branchcode);
         }
 
-        $query .= "GROUP BY subject, biblionumber ORDER BY subject";
+        $query .= "GROUP BY subject, biblionumber ORDER BY subject, biblio.title";
 
         warn "QUERY: " . Data::Dumper::Dumper($query);
         warn "PARAMS: " . Data::Dumper::Dumper(@parameters);
