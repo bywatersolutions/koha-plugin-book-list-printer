@@ -304,7 +304,6 @@ sub cronjob_nightly {
         if (my $f = $rec->field('655')) {
             my @fields;
             push(@fields, $f->subfield('a')) if $f->subfield('a');
-            push(@fields, $f->subfield('2')) if $f->subfield('2');
             my $s = join(' - ', @fields);
             warn "FOUND SUBJECT $s";
             push(@subjects, {subject => $s, tag => '655'}) if @fields;
@@ -319,7 +318,6 @@ sub cronjob_nightly {
 
             push(@fields, $f->subfield('a')) if $f->subfield('a');
             push(@fields, $f->subfield('x')) if $f->subfield('x');
-            push(@fields, $f->subfield('2')) if $f->subfield('2');
             my $s = join(' - ', @fields);
             warn "FOUND SUBJECT $s";
             push(@subjects, {subject => $s, tag => '650'}) if @fields;
