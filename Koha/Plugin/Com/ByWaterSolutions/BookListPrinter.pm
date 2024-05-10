@@ -118,7 +118,7 @@ sub report_step2 {
     my $items;
 
     if ( $display_by =~ /^subject/ ) {
-        my $tag = $display_by eq 'subject650a'? '650' : '655';
+        my $tag = $display_by eq 'subject650'? '650' : '655';
 
         my @parameters;
 
