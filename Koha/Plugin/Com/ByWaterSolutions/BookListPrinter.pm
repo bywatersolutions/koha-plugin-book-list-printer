@@ -76,6 +76,9 @@ sub report_step2 {
     my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
+    #my $logger = Koha::Logger->get({ interface => 'intranet'}, 1);
+    #$logger->warn("TEST");
+
     my $display_by = $cgi->param('display_by');
 
     my @locations  = $cgi->multi_param('location');
@@ -84,7 +87,7 @@ sub report_step2 {
 
     my ($afh, $html_file)   = tempfile(undef, SUFFIX => '.html');
     my ($sfh, $status_file) = tempfile(undef, SUFFIX => '.yml');
-    warn "ADOC: $html_file";
+    warn "HTML: $html_file";
     warn "STATUS: $status_file";
 
     my $pid = fork;
@@ -152,7 +155,9 @@ sub report_step2 {
             push(@parameters, $branchcode);
         }
 
-        $query .= "GROUP BY subject, biblionumber ORDER BY subject, biblio.title";
+        $query .= q{
+            GROUP BY subject, biblionumber ORDER BY subject, biblio.author, REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")
+        };
 
         warn "QUERY: " . Data::Dumper::Dumper($query);
         warn "PARAMS: " . Data::Dumper::Dumper(@parameters);
@@ -180,12 +185,14 @@ sub report_step2 {
         $search_params->{itype}              = \@itemtypes if @itemtypes;
 
         my $order_by
-            = $display_by eq 'title'  ? {-asc => 'biblio.title'}
+            = $display_by eq 'title'  ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
             : $display_by eq 'author' ? {-asc => 'biblio.author'}
-            :                           {-asc => 'biblio.title'};
+            :                           \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")';
 
-        $items = Koha::Items->search($search_params,
-            {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by});
+        my @p = ( $search_params, {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by} );
+        warn "SEARCH PARAMS: " . Data::Dumper::Dumper( \@p );
+        $items = Koha::Items->search(@p);
+        warn "AS QUERY: " . Data::Dumper::Dumper( $items->_resultset->as_query );
 
         $status->{count} = $items->count;
     }
