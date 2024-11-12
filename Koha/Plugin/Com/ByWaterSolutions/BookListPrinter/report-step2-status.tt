@@ -36,7 +36,9 @@
             </p>
         </div>
         <div id="download" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
-            Finished! <a id="file_download" href="">Download file</a>
+            Finished!
+            <p><a id="file_download_pdf" href="">Download pdf</a></p>
+            <p><a id="file_download_html" href="">Download html</a></p>            
         </div>
         <div id="error" class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-1">
             ERROR: <span id="error_message"></span>
@@ -72,8 +74,11 @@
             if ( data.pdf_file ) {
                 window.clearTimeout(timer);
 
-                const pdf_url = url + "&download=1";
-                $("#file_download").attr("href", pdf_url);
+                const pdf_url = url + "&download=1&type=pdf";
+                $("#file_download_pdf").attr("href", pdf_url);
+
+                const html_url = url + "&download=1&type=html";
+                $("#file_download_html").attr("href", html_url);
 
                 $("#processing").hide();
                 $("#wait").hide();

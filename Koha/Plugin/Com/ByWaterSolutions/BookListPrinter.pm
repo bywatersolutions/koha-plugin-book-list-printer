@@ -189,10 +189,10 @@ sub report_step2 {
             : $display_by eq 'author' ? {-asc => 'biblio.author'}
             :                           \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")';
 
-        my @p = ( $search_params, {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by} );
-        warn "SEARCH PARAMS: " . Data::Dumper::Dumper( \@p );
+        my @p = ($search_params, {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by});
+        warn "SEARCH PARAMS: " . Data::Dumper::Dumper(\@p);
         $items = Koha::Items->search(@p);
-        warn "AS QUERY: " . Data::Dumper::Dumper( $items->_resultset->as_query );
+        warn "AS QUERY: " . Data::Dumper::Dumper($items->_resultset->as_query);
 
         $status->{count} = $items->count;
     }
@@ -224,6 +224,7 @@ sub report_step2 {
     $status->{status}      = 'Finished';
     $status->{updated}     = dt_from_string()->iso8601;
     $status->{pdf_file}    = $pdf_file;
+    $status->{html_file}   = $html_file;
     $status->{html_output} = $output;
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
@@ -249,34 +250,61 @@ sub report_download {
     my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
 
+    my $type = $cgi->param('type');
+
     my $file = $cgi->param('status');
     warn "FILE: $file";
     my $data = LoadFile($file);
     warn Data::Dumper::Dumper($data);
 
-    my $filename = $data->{pdf_file};
-    warn "PDF FILE: $filename";
+    if ($type eq 'pdf') {
+        my $filename = $data->{pdf_file};
+        warn "PDF FILE: $filename";
 
-    my $bytes = (stat $filename)[7];
+        my $bytes = (stat $filename)[7];
 
-    print $cgi->header(
-        -attachment => "list.pdf",
-        -type       => 'application/pdf',
+        print $cgi->header(
+            -attachment => "list.pdf",
+            -type       => 'application/pdf',
 
-        #-Content_Disposition => "attachment; filename=list.pdf",
-        -Content_Length => "$bytes"
-    );
+            #-Content_Disposition => "attachment; filename=list.pdf",
+            -Content_Length => "$bytes"
+        );
 
-    open FILE, "< $filename" or die "can't open : $!";
-    binmode FILE;
-    local $/ = \10240;
-    while (<FILE>) {
-        print $_;
+        open FILE, "< $filename" or die "can't open : $!";
+        binmode FILE;
+        local $/ = \10240;
+        while (<FILE>) {
+            print $_;
+        }
+        close FILE;
+
+        unlink $data->{pdf_file};
+    } elsif ($type eq 'html') {
+        my $filename = $data->{html_file};
+        warn "HTML FILE: $filename";
+
+        my $bytes = (stat $filename)[7];
+
+        print $cgi->header(
+            -attachment => "list.html",
+            -type       => 'text/html',
+
+            #-Content_Disposition => "attachment; filename=list.pdf",
+            -Content_Length => "$bytes"
+        );
+
+        open FILE, "< $filename" or die "can't open : $!";
+        binmode FILE;
+        local $/ = \10240;
+        while (<FILE>) {
+            print $_;
+        }
+        close FILE;
+
+        unlink $data->{html_file};
     }
-    close FILE;
 
-    unlink $data->{html_file};
-    unlink $data->{pdf_file};
 }
 
 sub is_cmd_installed {
