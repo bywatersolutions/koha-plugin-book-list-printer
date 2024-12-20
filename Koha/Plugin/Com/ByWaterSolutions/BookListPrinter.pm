@@ -83,6 +83,7 @@ sub report_step2 {
 
     my @locations  = $cgi->multi_param('location');
     my @itemtypes  = $cgi->multi_param('itemtype');
+    my @ccodes     = $cgi->multi_param('ccodes');
     my $branchcode = $cgi->param('branchcode');
 
     my ($afh, $html_file)   = tempfile(undef, SUFFIX => '.html');
@@ -145,6 +146,13 @@ sub report_step2 {
             my $in_string = join(',', map {"\"$_\""} @locations);
             $query .= qq{
                 AND items.location IN ( $in_string )
+            };
+        }
+
+        if (@ccodes) {
+            my $in_string = join(',', map {"\"$_\""} @ccodes);
+            $query .= qq{
+                AND items.ccode IN ( $in_string )
             };
         }
 

@@ -39,6 +39,19 @@
               </div>
 
               <div class="form-group">
+                <label for="ccodes">Collection codes</label>
+
+                <div class="checkbox">
+                  [% FOREACH av IN AuthorisedValues.GetAuthValueDropbox('CCODE') %]
+                      <label>
+                        <input type="checkbox" name="location" value="[% av.authorised_value | html %]">
+                        [% av.lib | html %]
+                      </label>
+                  [% END %]
+                </div>
+              </div>
+
+              <div class="form-group">
                 <label for="location">Item types</label>
 
                 <div class="checkbox">
