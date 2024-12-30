@@ -19,8 +19,9 @@
           background-color: #76C2F8;
           text-align: left;
         }
-        .subject td { padding-bottom: 1px; }
-        .subject-heading {
+        .subject td, .author td { padding-bottom: 1px; }
+        .subject-heading,
+        .author-heading {
             font-weight: bold;
         }
     </style>
@@ -86,6 +87,46 @@
                         [% item.barcode | html %]
                     </td>
                 </tr>
+            [% END %]
+          </tbody>
+        </table>
+    [% ELSIF displayby.search('author') %]
+        <table class="author">
+          <thead>
+            <tr>
+              <th>Author</th>
+              <th>Title</th>
+              <th>Call #</th>
+              <th>Barcode #</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            [% SET author = "" %]
+            [% FOREACH i IN items %]
+                [% NEXT UNLESS i.biblio.author %]
+                [% SET item = i.biblio.items.next %]
+                [% IF i.biblio.author != author %]
+                    [% SET author = i.biblio.author %]
+                    <tr>
+                        <td colspan="3">
+                            <span class="author-heading">[% i.biblio.author | html %]</span>
+                        </td>
+                    </tr>
+                [% END %]
+                <tr>
+                    <td></td>
+                    <td>
+                        [% i.biblio.title | html %]
+                    </td>
+                    <td>
+                        [% item.itemcallnumber | html %]
+                    </td>
+                    <td>
+                        [% item.barcode | html %]
+                    </td>
+                </tr>
+
             [% END %]
           </tbody>
         </table>
