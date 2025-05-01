@@ -223,7 +223,7 @@ sub report_step2 {
     $pdf_file =~ s/html$/pdf/;
 
     my $command
-        = qq{/usr/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
+        = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
     my $output = qx($command);
     my $rc     = $?;
     $rc = $rc >> 8 unless ($rc == -1);
