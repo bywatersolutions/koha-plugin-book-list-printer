@@ -25,9 +25,9 @@
               <input type="hidden" name="method" value="[% METHOD %]"/>
               <input type="hidden" name="output" value="1" />
 
-              <div class="form-group">
-                <label for="location">Locations</label>
+              <div class="form-group page-section">
 
+                <h3>Locations</h3>
                 <div class="checkbox">
                   [% FOREACH av IN AuthorisedValues.GetAuthValueDropbox('LOC') %]
                       <label>
@@ -38,8 +38,8 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="ccodes">Collection codes</label>
+              <div class="form-group page-section">
+                <h3>Collection codes</h3>
 
                 <div class="checkbox">
                   [% FOREACH av IN AuthorisedValues.GetAuthValueDropbox('CCODE') %]
@@ -51,8 +51,8 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="location">Item types</label>
+              <div class="form-group page-section">
+                <h3>Item types</h3>
 
                 <div class="checkbox">
                   [% FOREACH i IN ItemTypes.Get() %]
@@ -64,18 +64,20 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="branchcode">Home library</label>
-                <select class="form-control" id="branchcode" name="branchcode">
-                    <option value="">All libraries</option>
+              <div class="form-group page-section">
+                <h3>Home library</h3>
+                <div class="checkbox">
                     [% FOREACH b IN Branches.all() %]
-                        <option value="[% b.branchcode | html %]">[% b.branchname | html %]</option>
+                      <label>
+                        <input type="checkbox" name="branchcode" value="[% b.branchcode | html %]">
+                        [% b.branchname | html %]
+                      </label>
                     [% END %]
-                </select>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="display_by">Display by</label>
+              <div class="form-group page-section">
+                <h3>Display by</h3>
                 <select class="form-control" id="display_by" name="display_by">
                   <option value="title">Title</option>
                   <option value="author">Author</option>
