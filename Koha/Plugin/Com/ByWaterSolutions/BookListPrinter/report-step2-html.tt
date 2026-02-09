@@ -46,6 +46,7 @@
                 [% CASE 'author' %] Author
                 [% CASE 'subject650' %] Subject (650)
                 [% CASE 'subject655' %] Subject (655)
+                [% CASE 'callnumber' %] Callnumber
             [% END %]
         </center>
     </div>

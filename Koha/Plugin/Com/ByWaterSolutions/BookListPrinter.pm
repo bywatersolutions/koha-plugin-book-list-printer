@@ -195,6 +195,7 @@ sub report_step2 {
         my $order_by
             = $display_by eq 'title'  ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
             : $display_by eq 'author' ? {-asc => 'biblio.author'}
+            : $display_by eq 'callnumber' ? {-asc => 'me.itemcallnumber'}
             :                           \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")';
 
         my @p = ($search_params, {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by});
