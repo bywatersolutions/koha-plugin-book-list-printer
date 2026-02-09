@@ -223,8 +223,27 @@ sub report_step2 {
     my $pdf_file = $html_file;
     $pdf_file =~ s/html$/pdf/;
 
+    # Generate title with sort order and one key filter
+    my $list_title = "Book List";
+
+    # Add one key filter (first available)
+    if ($branchcode) {
+        my $branch = Koha::Libraries->find($branchcode);
+        $list_title = $branch->branchname . " Books" if $branch;
+    } elsif (@itemtypes && scalar(@itemtypes) == 1) {
+        $list_title = $itemtypes[0] . " Books";
+    } elsif (@ccodes && scalar(@ccodes) == 1) {
+        $list_title = $ccodes[0] . " Books";
+    }
+
+    # Add sort order
+    $list_title .= " by Author" if $display_by eq 'author';
+    $list_title .= " by Title" if $display_by eq 'title';
+    $list_title .= " by Call Number" if $display_by eq 'callnumber';
+    $list_title .= " by Subject" if $display_by =~ /^subject/;
+
     my $command
-        = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
+    = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-center "$list_title" --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-line --header-spacing 5 --header-font-size 12 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 15mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
     my $output = qx($command);
     my $rc     = $?;
     $rc = $rc >> 8 unless ($rc == -1);
