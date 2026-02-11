@@ -59,6 +59,22 @@
                                 </li>
                             </ul>
                     </fieldset>
+                    <fieldset class="rows">
+                        <legend>Title Format</legend>
+                        <ol>
+                            <li>
+                                <label for="title_format">Title format template:</label>
+                                <textarea id="title_format"
+                                          name="title_format"
+                                          rows="5"
+                                          cols="80"
+                                          style="font-family: monospace;">[% title_format | html %]</textarea>
+                                <div class="hint">
+                                    Use Template Toolkit to format the title column and and additional fields to the display.    
+                                </div>
+                            </li>
+                        </ol>
+                    </fieldset>
                     
                     <fieldset class="action">
                         <input type="submit" value="Save configuration" class="btn btn-primary" />

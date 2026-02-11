@@ -16,6 +16,8 @@ use File::Temp qw(tempfile tempdir);
 use JSON       qw(to_json);
 use Try::Tiny;
 use YAML qw(DumpFile LoadFile);
+use C4::Letters;
+
 
 our $VERSION         = "{VERSION}";
 our $MINIMUM_VERSION = "{MINIMUM_VERSION}";
@@ -56,7 +58,8 @@ sub configure {
         ## Grab the values we already have for our settings, if any exist
         $template->param(
             subject_depth => $self->retrieve_data('subject_depth'),
-            display_columns => $self->retrieve_data('display_columns')
+            display_columns => $self->retrieve_data('display_columns'),
+            title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]'
         );
 
         $self->output_html( $template->output() );
@@ -68,6 +71,8 @@ sub configure {
             {
                 subject_depth => $cgi->param('subject_depth'),
                 display_columns => $display_columns,
+                title_format => scalar $cgi->param('title_format'),
+
             }
         );
         $self->go_home();
@@ -143,6 +148,7 @@ sub report_step2 {
     my $template = $self->get_template({file => 'report-step2-html.tt'});
 
     my $items;
+    my $title_format_template = $self->retrieve_data('title_format') || '[% biblio.title | html %]';
 
     if ($display_by =~ /^subject/) {
         my $tag = $display_by eq 'subject650' ? '650' : '655';
@@ -203,6 +209,7 @@ sub report_step2 {
         my @items;
         while (my $s = $sth->fetchrow_hashref) {
             $s->{biblio} = Koha::Biblios->find($s->{biblionumber});
+            $s->{formatted_title} = $self->format_title($s->{biblio}, $title_format_template);
 
             if (@itemtypes) {
                 my $biblio = $s->{biblio};
@@ -232,6 +239,17 @@ sub report_step2 {
         warn "AS QUERY: " . Data::Dumper::Dumper($items->_resultset->as_query);
 
         $status->{count} = $items->count;
+        my @items_array;
+        while (my $item = $items->next) {
+            my $item_data = {
+                biblionumber => $item->biblionumber,
+                biblio => $item->biblio,
+                itemcallnumber => $item->itemcallnumber,
+                formatted_title => $self->format_title($item->biblio, $title_format_template),
+            };
+            push @items_array, $item_data;
+        }
+    $items = \@items_array;
     }
 
     $status->{status}  = 'Generating HTML';
@@ -245,6 +263,8 @@ sub report_step2 {
         homebranch => $branchcode, 
         displayby => $display_by,
         display_columns => $self->retrieve_data('display_columns') || 'title|author|call_number',
+        title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
+
     );
     my $ok = $template->{TEMPLATE}->process($template->filename, $template->{VARS}, $afh);
     $status->{error} = "Template process failed: " . $template->{TEMPLATE}->error() unless $ok;
@@ -350,7 +370,6 @@ sub report_download {
 
         print $cgi->header(
             -attachment => "list.html",
-            -type       => 'text/html',
 
             #-Content_Disposition => "attachment; filename=list.pdf",
             -Content_Length => "$bytes"
@@ -431,6 +450,27 @@ sub cronjob_nightly {
             }
         }
     }
+}
+
+sub format_title {
+    my ($self, $biblio, $title_format_template) = @_;
+    
+    return $biblio->title unless $title_format_template;
+    
+    my $output;
+    eval {
+        $output = C4::Letters::_process_tt({
+            content => $title_format_template,
+            objects => { biblio => $biblio },
+        });
+    };
+    
+    if ($@) {
+        warn "Title format error: $@";
+        return $biblio->title;
+    }
+    
+    return $output || $biblio->title;
 }
 
 sub install {

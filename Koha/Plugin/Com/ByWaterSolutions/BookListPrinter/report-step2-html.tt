@@ -85,7 +85,7 @@
                 <tr>
                     [% IF show_title %]
                         <td>
-                            [% i.biblio.title | html %]
+                            [% i.formatted_title %]
                         </td>
                     [% END %]
                     [% IF show_author %]
@@ -129,7 +129,7 @@
                     [% IF show_author %]<td></td>[% END %]
                     [% IF show_title %]
                         <td>
-                            [% i.biblio.title | html %]
+                            [% i.formatted_title %]
                         </td>
                     [% END %]
                     [% IF show_call_number %]
@@ -174,8 +174,7 @@
               <tr>
                   [% IF displayby == "title" && show_title %]
                       <td>
-                          [%- i.biblio.title | html -%]
-                          [%- IF i.biblio.seriestitle -%] [[% i.biblio.seriestitle | html %]] [%- END -%]
+                           [% i.formatted_title %]
                       </td>
                   [% ELSIF displayby == "author" && show_author %]
                       <td>[% i.biblio.author | html %]</td>
@@ -185,8 +184,7 @@
                     
                   [% IF show_title && displayby != "title" %]
                       <td>
-                          [%- i.biblio.title | html -%]
-                          [%- IF i.biblio.seriestitle -%] [[% i.biblio.seriestitle | html %]] [%- END -%]
+                          [% i.formatted_title %]
                       </td>
                   [% END %]
                   [% IF show_author && displayby != "author" %]
