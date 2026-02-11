@@ -46,6 +46,30 @@ sub new {
     return $self;
 }
 
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    unless ( $cgi->param('save') ) {
+        my $template = $self->get_template({ file => 'configure.tt' });
+
+        ## Grab the values we already have for our settings, if any exist
+        $template->param(
+            subject_depth => $self->retrieve_data('subject_depth'),
+        );
+
+        $self->output_html( $template->output() );
+    }
+    else {
+        $self->store_data(
+            {
+                subject_depth => $cgi->param('subject_depth'),
+            }
+        );
+        $self->go_home();
+    }
+}
+
 sub report {
     my ($self, $args) = @_;
     my $cgi = $self->{'cgi'};
@@ -346,6 +370,8 @@ sub cronjob_nightly {
 
     my $dbh = C4::Context->dbh;
 
+    my $subject_depth = $self->retrieve_data('subject_depth');
+
     my $delete_sth = $dbh->prepare(q{DELETE FROM plugin_book_list_printer_subjects WHERE biblionumber = ?});
     my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ?, ? )});
 
@@ -375,7 +401,7 @@ sub cronjob_nightly {
         # Next, fill the subjects list with 650's
         my @f = $rec->field('650');
         foreach my $f (@f) {
-            next if scalar @subjects >= 3;
+            next if scalar @subjects >= $subject_depth;
 
             my @fields;
 

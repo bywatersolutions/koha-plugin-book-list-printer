@@ -1,0 +1,26 @@
+[% USE KohaDates %]
+<!-- We can use this wrapper to create plugin pages that have helpful breadcrumbs and the menu. -->
+[% WRAPPER "wrapper-staff-tool-plugin.inc" method="config" plugin_title="Book List Printer: Configuration" %]
+<body>
+<div id="doc3">
+    <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
+    <h3>Book List Printer: Configuration</h3>
+
+    <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
+    <form method="get">
+        <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+        <input type="hidden" name="class" value="[% CLASS | html %]"/>
+        <input type="hidden" name="method" value="[% METHOD | html %]"/>
+
+        <label for="subject_depth">Max subject depth: </label>
+        <input type="text" name="subject_depth" value="[% subject_depth | html %]" />
+
+        <input type="hidden" name="save" value="1" />
+        <br />
+        <br />
+        <input type="submit" value="Save configuration" />
+    </form>
+
+    <hr/>
+
+[% END %]
