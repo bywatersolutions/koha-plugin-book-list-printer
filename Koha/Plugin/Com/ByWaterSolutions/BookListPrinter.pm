@@ -56,14 +56,18 @@ sub configure {
         ## Grab the values we already have for our settings, if any exist
         $template->param(
             subject_depth => $self->retrieve_data('subject_depth'),
+            display_columns => $self->retrieve_data('display_columns')
         );
 
         $self->output_html( $template->output() );
     }
     else {
+        my @columns = $cgi->multi_param('display_columns');
+        my $display_columns = join('|', @columns);
         $self->store_data(
             {
                 subject_depth => $cgi->param('subject_depth'),
+                display_columns => $display_columns,
             }
         );
         $self->go_home();
@@ -235,7 +239,13 @@ sub report_step2 {
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    $template->param(items => $items, locations => \@locations, homebranch => $branchcode, displayby => $display_by);
+    $template->param(
+        items => $items, 
+        locations => \@locations, 
+        homebranch => $branchcode, 
+        displayby => $display_by,
+        display_columns => $self->retrieve_data('display_columns') || 'title|author|call_number',
+    );
     my $ok = $template->{TEMPLATE}->process($template->filename, $template->{VARS}, $afh);
     $status->{error} = "Template process failed: " . $template->{TEMPLATE}->error() unless $ok;
 

@@ -1,26 +1,73 @@
 [% USE KohaDates %]
-<!-- We can use this wrapper to create plugin pages that have helpful breadcrumbs and the menu. -->
 [% WRAPPER "wrapper-staff-tool-plugin.inc" method="config" plugin_title="Book List Printer: Configuration" %]
-<body>
-<div id="doc3">
-    <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
-    <h3>Book List Printer: Configuration</h3>
 
-    <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
-    <form method="get">
-        <!-- Always pass these two parameters so the plugin system knows what to execute! -->
-        <input type="hidden" name="class" value="[% CLASS | html %]"/>
-        <input type="hidden" name="method" value="[% METHOD | html %]"/>
-
-        <label for="subject_depth">Max subject depth: </label>
-        <input type="text" name="subject_depth" value="[% subject_depth | html %]" />
-
-        <input type="hidden" name="save" value="1" />
-        <br />
-        <br />
-        <input type="submit" value="Save configuration" />
-    </form>
-
-    <hr/>
+<div id="doc3" class="yui-t2">
+    <div id="bd">
+        <div id="yui-main">
+            <div class="yui-b">
+                <h2>Book List Printer: Configuration</h2>
+                
+                <form method="get" class="validated">
+                    <input type="hidden" name="class" value="[% CLASS | html %]"/>
+                    <input type="hidden" name="method" value="[% METHOD | html %]"/>
+                    <input type="hidden" name="save" value="1" />
+                    
+                    <fieldset class="rows">
+                        <legend>Subject Settings</legend>
+                        <ol>
+                            <li>
+                                <label for="subject_depth" class="required">Maximum subject depth: </label>
+                                <input type="number" 
+                                       id="subject_depth" 
+                                       name="subject_depth" 
+                                       value="[% subject_depth | html %]" 
+                                       min="1" 
+                                       max="10" 
+                                       required="required" 
+                                       class="required" />
+                                <span class="required">Required</span>
+                                <div class="hint">Maximum number of subjects to display per bibliographic record (1-10)</div>
+                            </li>
+                        </ol>
+                    </fieldset>
+                    <fieldset class="rows">
+                        <legend>Column Display</legend>
+                            <ul>
+                                <li>
+                                    <input type="checkbox"
+                                           id="col_title"
+                                           name="display_columns"
+                                           value="title"
+                                           [% IF display_columns.match('title') %]checked="checked"[% END %] />
+                                    <label for="col_title" style="display: inline;">Title</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox"
+                                           id="col_author"
+                                           name="display_columns"
+                                           value="author"
+                                           [% IF display_columns.match('author') %]checked="checked"[% END %] />
+                                    <label for="col_author" style="display: inline;">Author</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox"
+                                           id="col_call_number"
+                                           name="display_columns"
+                                           value="call_number"
+                                           [% IF display_columns.match('call_number') %]checked="checked"[% END %] />
+                                    <label for="col_call_number" style="display: inline;">Call Number</label>
+                                </li>
+                            </ul>
+                    </fieldset>
+                    
+                    <fieldset class="action">
+                        <input type="submit" value="Save configuration" class="btn btn-primary" />
+                        <a href="/cgi-bin/koha/plugins/plugins-home.pl" class="cancel">Cancel</a>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 [% END %]
