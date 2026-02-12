@@ -66,7 +66,7 @@
             <tr>
               [% IF show_title %]<th>Title</th>[% END %]
               [% IF show_author %]<th>Author</th>[% END %]
-              [% IF show_call_number %]<th>Call #</th>[% END %]
+              [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
           </thead>
 
@@ -90,12 +90,12 @@
                     [% END %]
                     [% IF show_author %]
                         <td>
-                            [% i.biblio.author | html %]
+                            [% i.formatted_author | html %]
                         </td>
                     [% END %]
                     [% IF show_call_number %]
                         <td>
-                            [% item.itemcallnumber | html %]
+                            [% i.formatted_item | html %]
                         </td>
                     [% END %]
                 </tr>
@@ -108,7 +108,7 @@
             <tr>
               [% IF show_author %]<th>Author</th>[% END %]
               [% IF show_title %]<th>Title</th>[% END %]
-              [% IF show_call_number %]<th>Call #</th>[% END %]
+              [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
           </thead>
 
@@ -121,7 +121,7 @@
                     [% SET author = i.biblio.author %]
                     <tr>
                         <td colspan="2">
-                            <span class="author-heading">[% i.biblio.author | html %]</span>
+                            <span class="author-heading">[% i.formatted_author | html %]</span>
                         </td>
                     </tr>
                 [% END %]
@@ -134,7 +134,7 @@
                     [% END %]
                     [% IF show_call_number %]
                         <td>
-                            [% item.itemcallnumber | html %]
+                            [% i.formatted_item | html %]
                         </td>
                     [% END %]
                 </tr>
@@ -161,7 +161,7 @@
                   <th>Author</th>
               [% END %]
               [% IF show_call_number  %]
-                <th>Call #</th>
+                <th>Item info.</th>
               [% END %]
             </tr>
           </thead>
@@ -177,7 +177,7 @@
                            [% i.formatted_title %]
                       </td>
                   [% ELSIF displayby == "author" && show_author %]
-                      <td>[% i.biblio.author | html %]</td>
+                      <td>[% i.formatted_author | html %]</td>
                   [% ELSIF displayby == "subject" %]
                       <td>SUBJECT GOES HERE</td>
                   [% END %]
@@ -188,10 +188,10 @@
                       </td>
                   [% END %]
                   [% IF show_author && displayby != "author" %]
-                      <td>[% i.biblio.author | html %]</td>
+                      <td>[% i.formatted_author | html %]</td>
                   [% END %]
                   [% IF show_call_number %]
-                      <td>[% i.itemcallnumber | html %]</td>
+                      <td>[% i.formatted_item | html %]</td>
                   [% END %]
               </tr>
               [%- seen.$biblionumber = 1 %]

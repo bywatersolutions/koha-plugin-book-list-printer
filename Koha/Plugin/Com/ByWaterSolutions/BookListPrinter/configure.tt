@@ -70,7 +70,39 @@
                                           cols="80"
                                           style="font-family: monospace;">[% title_format | html %]</textarea>
                                 <div class="hint">
-                                    Use Template Toolkit to format the title column and and additional fields to the display.    
+                                    Use Template Toolkit to format the title column.    
+                                </div>
+                            </li>
+                        </ol>
+                    </fieldset>
+                    <fieldset class="rows">
+                        <legend>Author Format</legend>
+                        <ol>
+                            <li>
+                                <label for="author_format">Author format template:</label>
+                                <textarea id="author_format"
+                                          name="author_format"
+                                          rows="5"
+                                          cols="80"
+                                          style="font-family: monospace;">[% author_format | html %]</textarea>
+                                <div class="hint">
+                                    Use Template Toolkit to format the author column.    
+                                </div>
+                            </li>
+                        </ol>
+                    </fieldset>
+                    <fieldset class="rows">
+                        <legend>Item Field Format</legend>
+                        <ol>
+                            <li>
+                                <label for="item_format">Item Field format template:</label>
+                                <textarea id="item_format"
+                                          name="item_format"
+                                          rows="5"
+                                          cols="80"
+                                          style="font-family: monospace;">[% item_format | html %]</textarea>
+                                <div class="hint">
+                                    Use Template Toolkit to format the item field column and add additional item fields.    
                                 </div>
                             </li>
                         </ol>
