@@ -57,6 +57,14 @@
                                            [% IF display_columns.match('call_number') %]checked="checked"[% END %] />
                                     <label for="col_call_number" style="display: inline;">Call Number</label>
                                 </li>
+                                <li>
+                                    <input type="checkbox"
+                                           id="col_series"
+                                           name="display_columns"
+                                           value="series"
+                                           [% IF display_columns.match('series') %]checked="checked"[% END %] />
+                                    <label for="col_series" style="display: inline;">Series</label>
+                                </li>
                             </ul>
                     </fieldset>
                     <fieldset class="rows">
