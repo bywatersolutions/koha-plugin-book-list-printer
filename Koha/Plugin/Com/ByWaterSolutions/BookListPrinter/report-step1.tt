@@ -83,6 +83,7 @@
                   <option value="author">Author</option>
                   <option value="subject655">Subject (655)</option>
                   <option value="subject650">Subject (650)</option>
+                  <option value="callnumber">Callnumber</option>
                 </select>
               </div>
 

@@ -1,5 +1,14 @@
 [%- USE AuthorisedValues -%]
 [%- USE Koha -%]
+
+[%- 
+    # Parse which columns to display 
+    display_cols = display_columns.split('\|');
+    show_title = display_cols.grep('^title$').size > 0;
+    show_author = display_cols.grep('^author$').size > 0;
+    show_call_number = display_cols.grep('^call_number$').size > 0;
+-%]
+
 <head>
   <title>Koha: Book List Printer</title>
 
@@ -46,6 +55,7 @@
                 [% CASE 'author' %] Author
                 [% CASE 'subject650' %] Subject (650)
                 [% CASE 'subject655' %] Subject (655)
+                [% CASE 'callnumber' %] Callnumber
             [% END %]
         </center>
     </div>
@@ -54,9 +64,9 @@
         <table class="subject">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Call #</th>
+              [% IF show_title %]<th>Title</th>[% END %]
+              [% IF show_author %]<th>Author</th>[% END %]
+              [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
           </thead>
 
@@ -73,15 +83,21 @@
                     </tr>
                 [% END %]
                 <tr>
-                    <td>
-                        [% i.biblio.title | html %]
-                    </td>
-                    <td>
-                        [% i.biblio.author | html %]
-                    </td>
-                    <td>
-                        [% item.itemcallnumber | html %]
-                    </td>
+                    [% IF show_title %]
+                        <td>
+                            [% i.formatted_title %]
+                        </td>
+                    [% END %]
+                    [% IF show_author %]
+                        <td>
+                            [% i.formatted_author | html %]
+                        </td>
+                    [% END %]
+                    [% IF show_call_number %]
+                        <td>
+                            [% i.formatted_item | html %]
+                        </td>
+                    [% END %]
                 </tr>
             [% END %]
           </tbody>
@@ -90,9 +106,9 @@
         <table class="author">
           <thead>
             <tr>
-              <th>Author</th>
-              <th>Title</th>
-              <th>Call #</th>
+              [% IF show_author %]<th>Author</th>[% END %]
+              [% IF show_title %]<th>Title</th>[% END %]
+              [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
           </thead>
 
@@ -105,18 +121,22 @@
                     [% SET author = i.biblio.author %]
                     <tr>
                         <td colspan="2">
-                            <span class="author-heading">[% i.biblio.author | html %]</span>
+                            <span class="author-heading">[% i.formatted_author | html %]</span>
                         </td>
                     </tr>
                 [% END %]
                 <tr>
-                    <td></td>
-                    <td>
-                        [% i.biblio.title | html %]
-                    </td>
-                    <td>
-                        [% item.itemcallnumber | html %]
-                    </td>
+                    [% IF show_author %]<td></td>[% END %]
+                    [% IF show_title %]
+                        <td>
+                            [% i.formatted_title %]
+                        </td>
+                    [% END %]
+                    [% IF show_call_number %]
+                        <td>
+                            [% i.formatted_item | html %]
+                        </td>
+                    [% END %]
                 </tr>
 
             [% END %]
@@ -127,21 +147,22 @@
           <thead>
             <tr>
               [%# Column sorted by always comes first %]
-              [% IF displayby == "title" %]
+              [% IF displayby == "title" && show_title %]
                   <th>Title</th>
-              [% ELSIF displayby == "author" %]
+              [% ELSIF displayby == "author" && show_author %]
                   <th>Author</th>
               [% ELSIF displayby == "subject" %]
                   <th>Subject</th>
               [% END %]
-
-              [% UNLESS  displayby == "title" %]
+              [% IF show_title && displayby != "title" %]
                   <th>Title</th>
               [% END %]
-              [% UNLESS  displayby == "author" %]
+              [% IF show_author && displayby != "author" %]
                   <th>Author</th>
               [% END %]
-              <th>Call #</th>
+              [% IF show_call_number  %]
+                <th>Item info.</th>
+              [% END %]
             </tr>
           </thead>
 
@@ -151,27 +172,27 @@
               [%- SET biblionumber = i.biblionumber %]
               [%- NEXT IF seen.$biblionumber %]
               <tr>
-                  [% IF displayby == "title" %]
+                  [% IF displayby == "title" && show_title %]
                       <td>
-                          [%- i.biblio.title | html -%]
-                          [%- IF i.biblio.seriestitle -%] [[% i.biblio.seriestitle | html %]] [%- END -%]
+                           [% i.formatted_title %]
                       </td>
-                  [% ELSIF displayby == "author" %]
-                      <td>[% i.biblio.author | html %]</td>
+                  [% ELSIF displayby == "author" && show_author %]
+                      <td>[% i.formatted_author | html %]</td>
                   [% ELSIF displayby == "subject" %]
                       <td>SUBJECT GOES HERE</td>
                   [% END %]
-
-                  [% UNLESS  displayby == "title" %]
+                    
+                  [% IF show_title && displayby != "title" %]
                       <td>
-                          [%- i.biblio.title | html -%]
-                          [%- IF i.biblio.seriestitle -%] [[% i.biblio.seriestitle | html %]] [%- END -%]
+                          [% i.formatted_title %]
                       </td>
                   [% END %]
-                  [% UNLESS  displayby == "author" %]
-                      <td>[% i.biblio.author | html %]</td>
+                  [% IF show_author && displayby != "author" %]
+                      <td>[% i.formatted_author | html %]</td>
                   [% END %]
-                <td>[% i.itemcallnumber | html %]</td>
+                  [% IF show_call_number %]
+                      <td>[% i.formatted_item | html %]</td>
+                  [% END %]
               </tr>
               [%- seen.$biblionumber = 1 %]
             [% END %]

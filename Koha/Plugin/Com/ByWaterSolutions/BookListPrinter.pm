@@ -16,6 +16,8 @@ use File::Temp qw(tempfile tempdir);
 use JSON       qw(to_json);
 use Try::Tiny;
 use YAML qw(DumpFile LoadFile);
+use C4::Letters;
+
 
 our $VERSION         = "{VERSION}";
 our $MINIMUM_VERSION = "{MINIMUM_VERSION}";
@@ -44,6 +46,42 @@ sub new {
     my $self = $class->SUPER::new($args);
 
     return $self;
+}
+
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{'cgi'};
+
+    unless ( $cgi->param('save') ) {
+        my $template = $self->get_template({ file => 'configure.tt' });
+
+        ## Grab the values we already have for our settings, if any exist
+        $template->param(
+            subject_depth => $self->retrieve_data('subject_depth'),
+            display_columns => $self->retrieve_data('display_columns'),
+            title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
+            author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
+            item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
+        );
+
+        $self->output_html( $template->output() );
+    }
+    else {
+        my @columns = $cgi->multi_param('display_columns');
+        my $display_columns = join('|', @columns);
+        $self->store_data(
+            {
+                subject_depth => $cgi->param('subject_depth'),
+                display_columns => $display_columns,
+                title_format => scalar $cgi->param('title_format'),
+                author_format => scalar $cgi->param('author_format'),
+                item_format => scalar $cgi->param('item_format'),
+
+
+            }
+        );
+        $self->go_home();
+    }
 }
 
 sub report {
@@ -115,6 +153,9 @@ sub report_step2 {
     my $template = $self->get_template({file => 'report-step2-html.tt'});
 
     my $items;
+    my $title_format_template = $self->retrieve_data('title_format') || '[% biblio.title | html %]';
+    my $author_format_template = $self->retrieve_data('author_format') || '[% biblio.author | html %]';
+    my $item_format_template = $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]';
 
     if ($display_by =~ /^subject/) {
         my $tag = $display_by eq 'subject650' ? '650' : '655';
@@ -176,6 +217,24 @@ sub report_step2 {
         while (my $s = $sth->fetchrow_hashref) {
             $s->{biblio} = Koha::Biblios->find($s->{biblionumber});
 
+            # Get ALL items matching the search criteria
+            my $item_search = {};
+            $item_search->{permanent_location} = \@locations if @locations;
+            $item_search->{homebranch} = $branchcode if $branchcode;
+            $item_search->{itype} = \@itemtypes if @itemtypes;
+            $item_search->{ccode} = \@ccodes if @ccodes;
+
+            my $matching_items = $s->{biblio}->items->search($item_search);
+            my @formatted_items;
+            while (my $item = $matching_items->next) {
+                my $formatted = $self->format_item($item, $item_format_template);
+                push @formatted_items, $formatted if $formatted;
+            }
+
+            $s->{formatted_title} = $self->format_title($s->{biblio}, $title_format_template);
+            $s->{formatted_author} = $self->format_author($s->{biblio}, $author_format_template);
+            $s->{formatted_item} = join(', ', @formatted_items);  # Join all items with comma-space
+
             if (@itemtypes) {
                 my $biblio = $s->{biblio};
                 my @itypes = $biblio->items->get_column('itype');
@@ -195,6 +254,7 @@ sub report_step2 {
         my $order_by
             = $display_by eq 'title'  ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
             : $display_by eq 'author' ? {-asc => 'biblio.author'}
+            : $display_by eq 'callnumber' ? {-asc => 'me.itemcallnumber'}
             :                           \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")';
 
         my @p = ($search_params, {prefetch => {'biblio' => 'biblio_metadatas'}, order_by => $order_by});
@@ -203,6 +263,19 @@ sub report_step2 {
         warn "AS QUERY: " . Data::Dumper::Dumper($items->_resultset->as_query);
 
         $status->{count} = $items->count;
+        my @items_array;
+        while (my $item = $items->next) {
+            my $item_data = {
+                biblionumber => $item->biblionumber,
+                biblio => $item->biblio,
+                itemcallnumber => $item->itemcallnumber,
+                formatted_title => $self->format_title($item->biblio, $title_format_template),
+                formatted_author => $self->format_author($item->biblio, $author_format_template),
+                formatted_item => $self->format_item($item, $item_format_template),
+            };
+            push @items_array, $item_data;
+        }
+    $items = \@items_array;
     }
 
     $status->{status}  = 'Generating HTML';
@@ -210,7 +283,17 @@ sub report_step2 {
     DumpFile($status_file, $status);
     warn Data::Dumper::Dumper($status);
 
-    $template->param(items => $items, locations => \@locations, homebranch => $branchcode, displayby => $display_by);
+    $template->param(
+        items => $items, 
+        locations => \@locations, 
+        homebranch => $branchcode, 
+        displayby => $display_by,
+        display_columns => $self->retrieve_data('display_columns') || 'title|author|call_number',
+        title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
+        author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
+        item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
+    );
+
     my $ok = $template->{TEMPLATE}->process($template->filename, $template->{VARS}, $afh);
     $status->{error} = "Template process failed: " . $template->{TEMPLATE}->error() unless $ok;
 
@@ -222,8 +305,27 @@ sub report_step2 {
     my $pdf_file = $html_file;
     $pdf_file =~ s/html$/pdf/;
 
+    # Generate title with sort order and one key filter
+    my $list_title = "Book List";
+
+    # Add one key filter (first available)
+    if ($branchcode) {
+        my $branch = Koha::Libraries->find($branchcode);
+        $list_title = $branch->branchname . " Books" if $branch;
+    } elsif (@itemtypes && scalar(@itemtypes) == 1) {
+        $list_title = $itemtypes[0] . " Books";
+    } elsif (@ccodes && scalar(@ccodes) == 1) {
+        $list_title = $ccodes[0] . " Books";
+    }
+
+    # Add sort order
+    $list_title .= " by Author" if $display_by eq 'author';
+    $list_title .= " by Title" if $display_by eq 'title';
+    $list_title .= " by Call Number" if $display_by eq 'callnumber';
+    $list_title .= " by Subject" if $display_by =~ /^subject/;
+
     my $command
-        = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-spacing 3 --header-font-size 10 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 10mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
+    = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-center "$list_title" --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-line --header-spacing 5 --header-font-size 12 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 15mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
     my $output = qx($command);
     my $rc     = $?;
     $rc = $rc >> 8 unless ($rc == -1);
@@ -296,7 +398,6 @@ sub report_download {
 
         print $cgi->header(
             -attachment => "list.html",
-            -type       => 'text/html',
 
             #-Content_Disposition => "attachment; filename=list.pdf",
             -Content_Length => "$bytes"
@@ -325,6 +426,8 @@ sub cronjob_nightly {
     warn "Koha::Plugin::Com::ByWaterSolutions::BookListPrinter::cronjob_nightly";
 
     my $dbh = C4::Context->dbh;
+
+    my $subject_depth = $self->retrieve_data('subject_depth');
 
     my $delete_sth = $dbh->prepare(q{DELETE FROM plugin_book_list_printer_subjects WHERE biblionumber = ?});
     my $insert_sth = $dbh->prepare(q{INSERT INTO plugin_book_list_printer_subjects VALUES ( ?, ?, ?, ? )});
@@ -355,7 +458,7 @@ sub cronjob_nightly {
         # Next, fill the subjects list with 650's
         my @f = $rec->field('650');
         foreach my $f (@f) {
-            next if scalar @subjects >= 3;
+            next if scalar @subjects >= $subject_depth;
 
             my @fields;
 
@@ -375,6 +478,72 @@ sub cronjob_nightly {
             }
         }
     }
+}
+
+sub format_title {
+    my ($self, $biblio, $title_format_template) = @_;
+    
+    return $biblio->title unless $title_format_template;
+    
+    my $output;
+    eval {
+        $output = C4::Letters::_process_tt({
+            content => $title_format_template,
+            objects => { biblio => $biblio },
+        });
+    };
+    
+    if ($@) {
+        warn "Title format error: $@";
+        return $biblio->title;
+    }
+    
+    return $output || $biblio->title;
+}
+
+sub format_author {
+    my ($self, $biblio, $author_format_template) = @_;
+    
+    return $biblio->author unless $author_format_template;
+    
+    my $output;
+    eval {
+        $output = C4::Letters::_process_tt({
+            content => $author_format_template,
+            objects => { biblio => $biblio },
+        });
+    };
+    
+    if ($@) {
+        warn "Author format error: $@";
+        return $biblio->author;
+    }
+    
+    return $output || $biblio->author;
+}
+
+sub format_item {
+    my ($self, $item, $item_format_template) = @_;
+    
+    # Default to item call number if no template provided
+    return $item->itemcallnumber unless $item_format_template;
+    
+    my $output;
+    eval {
+        $output = C4::Letters::_process_tt({
+            content => $item_format_template,
+            objects => { item => $item },
+        });
+    };
+    
+    # On error, log and fall back to call number
+    if ($@) {
+        warn "Item format template error: $@";
+        return $item->itemcallnumber;
+    }
+    
+    # Return formatted output, or call number if output is empty
+    return $output || $item->itemcallnumber;
 }
 
 sub install {
