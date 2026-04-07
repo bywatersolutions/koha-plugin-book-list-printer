@@ -58,7 +58,6 @@ sub configure {
         ## Grab the values we already have for our settings, if any exist
         $template->param(
             subject_depth => $self->retrieve_data('subject_depth'),
-            display_columns => $self->retrieve_data('display_columns'),
             title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
             author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
             item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
@@ -67,12 +66,9 @@ sub configure {
         $self->output_html( $template->output() );
     }
     else {
-        my @columns = $cgi->multi_param('display_columns');
-        my $display_columns = join('|', @columns);
         $self->store_data(
             {
                 subject_depth => $cgi->param('subject_depth'),
-                display_columns => $display_columns,
                 title_format => scalar $cgi->param('title_format'),
                 author_format => scalar $cgi->param('author_format'),
                 item_format => scalar $cgi->param('item_format'),
@@ -292,7 +288,7 @@ sub report_step2 {
         locations => \@locations, 
         homebranch => $branchcode, 
         displayby => $display_by,
-        display_columns => $self->retrieve_data('display_columns') || 'title|author|call_number',
+        display_columns => join('|', $cgi->multi_param('display_columns')) || 'title|author|call_number',
         title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
         author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
         item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
