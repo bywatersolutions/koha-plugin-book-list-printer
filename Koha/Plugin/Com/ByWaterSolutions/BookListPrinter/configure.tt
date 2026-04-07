@@ -31,35 +31,6 @@
                         </ol>
                     </fieldset>
                     <fieldset class="rows">
-                        <legend>Column Display</legend>
-                            <ul>
-                                <li>
-                                    <input type="checkbox"
-                                           id="col_title"
-                                           name="display_columns"
-                                           value="title"
-                                           [% IF display_columns.match('title') %]checked="checked"[% END %] />
-                                    <label for="col_title" style="display: inline;">Title</label>
-                                </li>
-                                <li>
-                                    <input type="checkbox"
-                                           id="col_author"
-                                           name="display_columns"
-                                           value="author"
-                                           [% IF display_columns.match('author') %]checked="checked"[% END %] />
-                                    <label for="col_author" style="display: inline;">Author</label>
-                                </li>
-                                <li>
-                                    <input type="checkbox"
-                                           id="col_call_number"
-                                           name="display_columns"
-                                           value="call_number"
-                                           [% IF display_columns.match('call_number') %]checked="checked"[% END %] />
-                                    <label for="col_call_number" style="display: inline;">Call Number</label>
-                                </li>
-                            </ul>
-                    </fieldset>
-                    <fieldset class="rows">
                         <legend>Title Format</legend>
                         <ol>
                             <li>

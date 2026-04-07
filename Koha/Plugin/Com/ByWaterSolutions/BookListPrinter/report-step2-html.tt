@@ -7,6 +7,7 @@
     show_title = display_cols.grep('^title$').size > 0;
     show_author = display_cols.grep('^author$').size > 0;
     show_call_number = display_cols.grep('^call_number$').size > 0;
+    show_series = display_cols.grep('^series$').size > 0;
 -%]
 
 <head>
@@ -52,9 +53,11 @@
             by
             [% SWITCH displayby %]
                 [% CASE 'title' %] Title
+                [% CASE 'title_series' %] Title (with Series)
                 [% CASE 'author' %] Author
                 [% CASE 'subject650' %] Subject (650)
                 [% CASE 'subject655' %] Subject (655)
+                [% CASE 'subject655_series' %] Subject (655) with Series
                 [% CASE 'callnumber' %] Callnumber
             [% END %]
         </center>
@@ -65,6 +68,7 @@
           <thead>
             <tr>
               [% IF show_title %]<th>Title</th>[% END %]
+              [% IF show_series %]<th>Series</th>[% END %]
               [% IF show_author %]<th>Author</th>[% END %]
               [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
@@ -77,26 +81,23 @@
                 [% IF i.subject != subject %]
                     [% SET subject = i.subject %]
                     <tr>
-                        <td colspan="2">
+                        <td colspan="[% show_series ? 3 : 2 %]">
                             <span class="subject-heading">[% i.subject | html %]</span>
                         </td>
                     </tr>
                 [% END %]
                 <tr>
                     [% IF show_title %]
-                        <td>
-                            [% i.formatted_title %]
-                        </td>
+                        <td>[% i.formatted_title %]</td>
+                    [% END %]
+                    [% IF show_series %]
+                        <td>[% i.series | html %]</td>
                     [% END %]
                     [% IF show_author %]
-                        <td>
-                            [% i.formatted_author | html %]
-                        </td>
+                        <td>[% i.formatted_author | html %]</td>
                     [% END %]
                     [% IF show_call_number %]
-                        <td>
-                            [% i.formatted_item | html %]
-                        </td>
+                        <td>[% i.formatted_item | html %]</td>
                     [% END %]
                 </tr>
             [% END %]
@@ -128,17 +129,12 @@
                 <tr>
                     [% IF show_author %]<td></td>[% END %]
                     [% IF show_title %]
-                        <td>
-                            [% i.formatted_title %]
-                        </td>
+                        <td>[% i.formatted_title %]</td>
                     [% END %]
                     [% IF show_call_number %]
-                        <td>
-                            [% i.formatted_item | html %]
-                        </td>
+                        <td>[% i.formatted_item | html %]</td>
                     [% END %]
                 </tr>
-
             [% END %]
           </tbody>
         </table>
@@ -146,21 +142,21 @@
         <table>
           <thead>
             <tr>
-              [%# Column sorted by always comes first %]
-              [% IF displayby == "title" && show_title %]
+              [% IF ( displayby == "title" || displayby == "title_series" ) && show_title %]
                   <th>Title</th>
               [% ELSIF displayby == "author" && show_author %]
                   <th>Author</th>
               [% ELSIF displayby == "subject" %]
                   <th>Subject</th>
               [% END %]
-              [% IF show_title && displayby != "title" %]
+              [% IF show_series %]<th>Series</th>[% END %]
+              [% IF show_title && displayby != "title" && displayby != "title_series" %]
                   <th>Title</th>
               [% END %]
               [% IF show_author && displayby != "author" %]
                   <th>Author</th>
               [% END %]
-              [% IF show_call_number  %]
+              [% IF show_call_number %]
                 <th>Item info.</th>
               [% END %]
             </tr>
@@ -172,20 +168,18 @@
               [%- SET biblionumber = i.biblionumber %]
               [%- NEXT IF seen.$biblionumber %]
               <tr>
-                  [% IF displayby == "title" && show_title %]
-                      <td>
-                           [% i.formatted_title %]
-                      </td>
+                  [% IF ( displayby == "title" || displayby == "title_series" ) && show_title %]
+                      <td>[% i.formatted_title %]</td>
                   [% ELSIF displayby == "author" && show_author %]
                       <td>[% i.formatted_author | html %]</td>
                   [% ELSIF displayby == "subject" %]
                       <td>SUBJECT GOES HERE</td>
                   [% END %]
-                    
-                  [% IF show_title && displayby != "title" %]
-                      <td>
-                          [% i.formatted_title %]
-                      </td>
+                  [% IF show_series %]
+                      <td>[% i.series | html %]</td>
+                  [% END %]
+                  [% IF show_title && displayby != "title" && displayby != "title_series" %]
+                      <td>[% i.formatted_title %]</td>
                   [% END %]
                   [% IF show_author && displayby != "author" %]
                       <td>[% i.formatted_author | html %]</td>

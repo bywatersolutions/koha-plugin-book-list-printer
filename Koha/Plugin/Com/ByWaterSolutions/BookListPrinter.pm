@@ -58,7 +58,6 @@ sub configure {
         ## Grab the values we already have for our settings, if any exist
         $template->param(
             subject_depth => $self->retrieve_data('subject_depth'),
-            display_columns => $self->retrieve_data('display_columns'),
             title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
             author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
             item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
@@ -67,12 +66,9 @@ sub configure {
         $self->output_html( $template->output() );
     }
     else {
-        my @columns = $cgi->multi_param('display_columns');
-        my $display_columns = join('|', @columns);
         $self->store_data(
             {
                 subject_depth => $cgi->param('subject_depth'),
-                display_columns => $display_columns,
                 title_format => scalar $cgi->param('title_format'),
                 author_format => scalar $cgi->param('author_format'),
                 item_format => scalar $cgi->param('item_format'),
@@ -158,7 +154,8 @@ sub report_step2 {
     my $item_format_template = $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]';
 
     if ($display_by =~ /^subject/) {
-        my $tag = $display_by eq 'subject650' ? '650' : '655';
+        my $tag = ( $display_by eq 'subject650' ) ? '650' : '655';
+
 
         my @parameters;
 
@@ -234,6 +231,7 @@ sub report_step2 {
             $s->{formatted_title} = $self->format_title($s->{biblio}, $title_format_template);
             $s->{formatted_author} = $self->format_author($s->{biblio}, $author_format_template);
             $s->{formatted_item} = join(', ', @formatted_items);  # Join all items with comma-space
+            $s->{series}           = $self->get_series($s->{biblio});
 
             if (@itemtypes) {
                 my $biblio = $s->{biblio};
@@ -253,6 +251,7 @@ sub report_step2 {
 
         my $order_by
             = $display_by eq 'title'  ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
+            : $display_by eq 'title_series' ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
             : $display_by eq 'author' ? {-asc => 'biblio.author'}
             : $display_by eq 'callnumber' ? {-asc => 'me.itemcallnumber'}
             :                           \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")';
@@ -272,6 +271,7 @@ sub report_step2 {
                 formatted_title => $self->format_title($item->biblio, $title_format_template),
                 formatted_author => $self->format_author($item->biblio, $author_format_template),
                 formatted_item => $self->format_item($item, $item_format_template),
+                series           => $self->get_series($item->biblio),
             };
             push @items_array, $item_data;
         }
@@ -288,7 +288,7 @@ sub report_step2 {
         locations => \@locations, 
         homebranch => $branchcode, 
         displayby => $display_by,
-        display_columns => $self->retrieve_data('display_columns') || 'title|author|call_number',
+        display_columns => join('|', $cgi->multi_param('display_columns')) || 'title|author|call_number',
         title_format => $self->retrieve_data('title_format') || '[% biblio.title | html %]',
         author_format => $self->retrieve_data('author_format') || '[% biblio.author | html %]',
         item_format => $self->retrieve_data('item_format') || '[% item.itemcallnumber | html %]',
@@ -321,8 +321,10 @@ sub report_step2 {
     # Add sort order
     $list_title .= " by Author" if $display_by eq 'author';
     $list_title .= " by Title" if $display_by eq 'title';
+    $list_title .= " by Title (Series)"   if $display_by eq 'title_series';
     $list_title .= " by Call Number" if $display_by eq 'callnumber';
     $list_title .= " by Subject" if $display_by =~ /^subject/;
+    $list_title .= " by Subject (Series)" if $display_by eq 'subject655_series';
 
     my $command
     = qq{/usr/local/bin/wkhtmltopdf --encoding utf-8 --disable-smart-shrinking --page-size letter --header-center "$list_title" --header-left "Page [page] of [toPage]" --header-right "Date: [date]" --header-line --header-spacing 5 --header-font-size 12 --footer-spacing 4 --footer-left "" --footer-right '' --footer-font-size 10 --margin-top 15mm --margin-bottom 10mm --margin-left 10mm --margin-right 10mm $html_file $pdf_file 2>&1};
@@ -544,6 +546,28 @@ sub format_item {
     
     # Return formatted output, or call number if output is empty
     return $output || $item->itemcallnumber;
+}
+
+sub get_series {
+    my ($self, $biblio) = @_;
+
+    my $rec;
+    eval { $rec = $biblio->metadata->record };
+    return '' unless $rec;
+
+    my @series_parts;
+    for my $f ($rec->field('490')) {
+        my $title  = $f->subfield('a') // '';
+        my $volume = $f->subfield('v') // '';
+        $title  =~ s/\s*[,;:\/]\s*$//;  # strip trailing punctuation
+        $volume =~ s/\s*[,;:\/]\s*$//;
+
+        my $s = $title;
+        $s   .= ", $volume" if $volume;
+        push @series_parts, $s if $s;
+    }
+
+    return join('; ', @series_parts);
 }
 
 sub install {
