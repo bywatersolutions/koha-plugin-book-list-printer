@@ -177,6 +177,7 @@ sub report_step2 {
                     OR
                     items.itype IN ( $in_string )
                 )
+                AND items.itype NOT IN ( 'ILL', 'ILL7' )
             };
         }
 
@@ -242,6 +243,16 @@ sub report_step2 {
 
             push(@items, $s);
         }
+        # Sort all items by subject, then title within each subject
+        @items = sort {
+            $a->{subject} cmp $b->{subject}
+            ||
+            do {
+                (my $ta = lc($a->{formatted_title} // '')) =~ s/^(the|an|a)\s+//;
+                (my $tb = lc($b->{formatted_title} // '')) =~ s/^(the|an|a)\s+//;
+                $ta cmp $tb
+            }
+        } @items;
         $items = \@items;
     } else {
         my $search_params = {};
@@ -316,6 +327,11 @@ sub report_step2 {
         $list_title = $itemtypes[0] . " Books";
     } elsif (@ccodes && scalar(@ccodes) == 1) {
         $list_title = $ccodes[0] . " Books";
+    }
+
+    if (@locations) {
+        my $loc_string = join(', ', @locations);
+        $list_title .= " - $loc_string";
     }
 
     # Add sort order

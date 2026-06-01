@@ -37,32 +37,6 @@
     </style>
 </head>
 <body>
-    <div>
-        <center>
-            [% Koha.Preference('LibraryName') | html %]
-        </center>
-    </div>
-
-    <div>
-        <center>
-            Library
-            [% FOREACH l IN locations %]
-                [% AuthorisedValues.GetByCode( 'LOC', l ) | html %]
-                [%- UNLESS loop.last %],[% END %]
-            [% END %]
-            by
-            [% SWITCH displayby %]
-                [% CASE 'title' %] Title
-                [% CASE 'title_series' %] Title (with Series)
-                [% CASE 'author' %] Author
-                [% CASE 'subject650' %] Subject (650)
-                [% CASE 'subject655' %] Subject (655)
-                [% CASE 'subject655_series' %] Subject (655) with Series
-                [% CASE 'callnumber' %] Callnumber
-            [% END %]
-        </center>
-    </div>
-
     [% IF displayby.search('subject') %]
         <table class="subject">
           <thead>
@@ -109,6 +83,7 @@
             <tr>
               [% IF show_author %]<th>Author</th>[% END %]
               [% IF show_title %]<th>Title</th>[% END %]
+              [% IF show_series %]<th>Series</th>[% END %]
               [% IF show_call_number %]<th>Item info.</th>[% END %]
             </tr>
           </thead>
@@ -130,6 +105,9 @@
                     [% IF show_author %]<td></td>[% END %]
                     [% IF show_title %]
                         <td>[% i.formatted_title %]</td>
+                    [% END %]
+                    [% IF show_series %]
+                        <td>[% i.series | html %]</td>
                     [% END %]
                     [% IF show_call_number %]
                         <td>[% i.formatted_item | html %]</td>
