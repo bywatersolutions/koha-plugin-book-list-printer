@@ -18,7 +18,7 @@
           width: 100%;
         }
         table, th, td {
-          border: 0px solid black;
+          border: 1px solid black;
           border-collapse: collapse;
         }
         th, td {
@@ -33,6 +33,10 @@
         .subject-heading,
         .author-heading {
             font-weight: bold;
+        }
+	table, th, td {
+   	    border: 1px solid #444;
+            border-collapse: collapse;
         }
     </style>
 </head>

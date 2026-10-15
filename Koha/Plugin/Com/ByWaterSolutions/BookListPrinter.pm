@@ -259,6 +259,7 @@ sub report_step2 {
         $search_params->{permanent_location} = \@locations if @locations;
         $search_params->{homebranch}         = $branchcode if $branchcode;
         $search_params->{itype}              = \@itemtypes if @itemtypes;
+	$search_params->{ccode}              = \@ccodes    if @ccodes;
 
         my $order_by
             = $display_by eq 'title'  ? \'REGEXP_REPLACE(biblio.title, "^(The|An|A)[[:space:]]+", "")'
